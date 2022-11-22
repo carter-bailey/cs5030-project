@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
-set(SOURCE_FILES serial.cpp )
-set(HEADER_FILES utils.hpp)
+set(SOURCE_FILES main.cpp )
+set(HEADER_FILES utils.hpp knn.hpp song.hpp )
 set(PROJECTNAME knn)
 
 project(${PROJECTNAME})

@@ -1,26 +1,30 @@
+#pragma once
+#include "song.hpp"
+
 #include <fstream>
 #include <iostream>
+#include <limits>
+#include <map>
+#include <random>
 #include <sstream>
 #include <vector>
 
 #define DELIMITER ','
 
-struct song
+struct KeyHash
 {
-    std::string genre;
-    float danceability;
-    float energy;
-    int key;
-    float loudness;
-    int mode;
-    float speechiness;
-    float acousticness;
-    float intrumental;
-    float liveness;
-    float valence;
-    float tempo;
-    float duration;
-    int timeSignature;
+    std::size_t operator()(const song& s) const
+    {
+        return std::hash<float>()(s.energy) ^ (std::hash<float>()(s.tempo) << 1);
+    }
+};
+
+struct KeyEqual
+{
+    bool operator()(const song& lhs, const song& rhs) const
+    {
+        return lhs.energy == rhs.energy && lhs.tempo == rhs.tempo;
+    }
 };
 
 // Taken from https://www.delftstack.com/howto/cpp/read-csv-file-in-cpp/
@@ -40,6 +44,7 @@ std::stringstream readFileIntoStringstream(const std::string& path)
         exit(EXIT_FAILURE);
     }
     ss << input_file.rdbuf();
+    input_file.close();
     return ss;
 }
 
@@ -48,6 +53,10 @@ std::vector<song> getCSV()
     std::stringstream csv = readFileIntoStringstream("genres_v2.csv");
     std::vector<song> content;
     std::vector<std::string> data;
+
+    // initialize our min and max
+    song min;
+    song max;
 
     std::string record;
 
@@ -62,26 +71,34 @@ std::vector<song> getCSV()
             data.push_back(record);
         }
 
-        // Assign the data
-        song temp;
-        temp.danceability = std::stof(data.at(0));
-        temp.energy = std::stof(data.at(1));
-        temp.key = std::stof(data.at(2));
-        temp.loudness = std::stof(data.at(3));
-        temp.mode = std::stoi(data.at(4));
-        temp.speechiness = std::stof(data.at(5));
-        temp.acousticness = std::stof(data.at(6));
-        temp.intrumental = std::stof(data.at(7));
-        temp.liveness = std::stof(data.at(8));
-        temp.valence = std::stof(data.at(9));
-        temp.tempo = std::stoi(data.at(10));
-        temp.duration = std::stof(data.at(16));
-        temp.timeSignature = std::stoi(data.at(17));
-        temp.genre = data.at(18);
+        song temp(data);
+
+        // check to see if we have any new mins or maxes.
+        min.min(temp);
+        max.max(temp);
 
         content.push_back(temp);
         data.clear();
     }
+    for (song s : content)
+    {
+        s.standardize(min, max);
+    }
 
     return content;
+}
+void writeToCSV(std::map<song, std::vector<song>> hash, std::vector<song> centroids)
+{
+    std::ofstream output_file("results.csv");
+    output_file << "centroid,danceability,energy,loudness,speechiness,\
+    acousticness,instrumental,liveness,valence,tempo\n";
+    int counter = 0;
+    for (auto c : centroids)
+    {
+        for (auto s : hash[c])
+        {
+            output_file << counter << "," << s.toString();
+        }
+    }
+    output_file.close();
 }
