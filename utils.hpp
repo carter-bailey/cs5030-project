@@ -2,6 +2,7 @@
 #include "song.hpp"
 
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <limits>
 #include <map>
@@ -10,22 +11,6 @@
 #include <vector>
 
 #define DELIMITER ','
-
-struct KeyHash
-{
-    std::size_t operator()(const song& s) const
-    {
-        return std::hash<float>()(s.energy) ^ (std::hash<float>()(s.tempo) << 1);
-    }
-};
-
-struct KeyEqual
-{
-    bool operator()(const song& lhs, const song& rhs) const
-    {
-        return lhs.energy == rhs.energy && lhs.tempo == rhs.tempo;
-    }
-};
 
 // Taken from https://www.delftstack.com/howto/cpp/read-csv-file-in-cpp/
 /**
@@ -87,15 +72,16 @@ std::vector<song> getCSV()
 
     return content;
 }
-void writeToCSV(std::map<song, std::vector<song>> hash, std::vector<song> centroids)
+
+void writeToCSV(std::map<int, std::vector<song>> hash, std::vector<song> centroids)
 {
     std::ofstream output_file("results.csv");
     output_file << "centroid,danceability,energy,loudness,speechiness,\
     acousticness,instrumental,liveness,valence,tempo\n";
     int counter = 0;
-    for (auto c : centroids)
+    for (int i = 0; i < centroids.size(); i++)
     {
-        for (auto s : hash[c])
+        for (auto s : hash[i])
         {
             output_file << counter << "," << s.toString();
         }

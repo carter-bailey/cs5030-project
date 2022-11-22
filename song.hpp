@@ -33,7 +33,7 @@ class song
 
     song(std::vector<std::string>);
     // randomly assign all of the variables a random number
-    song(std::uniform_real_distribution<float> distr, std::default_random_engine eng);
+    song(float[]);
 
     float distance(song);
     void min(song);
@@ -59,16 +59,16 @@ song::song(std::vector<std::string> data) :
 }
 
 // constructor that randomly assign all of the variables a random number
-song::song(std::uniform_real_distribution<float> distr, std::default_random_engine eng) :
-    danceability(distr(eng)),
-    energy(distr(eng)),
-    loudness(distr(eng)),
-    speechiness(distr(eng)),
-    acousticness(distr(eng)),
-    instrumental(distr(eng)),
-    liveness(distr(eng)),
-    valence(distr(eng)),
-    tempo(distr(eng))
+song::song(float data[9]) :
+    danceability(data[0]),
+    energy(data[1]),
+    loudness(data[2]),
+    speechiness(data[3]),
+    acousticness(data[4]),
+    instrumental(data[5]),
+    liveness(data[6]),
+    valence(data[7]),
+    tempo(data[8])
 {
 }
 
@@ -149,9 +149,10 @@ void song::standardize(song min, song max)
 std::string song::toString()
 {
     std::stringstream s;
-    s << danceability << "," << energy << "," << loudness << "," << speechiness << "," << acousticness << "," << instrumental << "," << instrumental << "," << liveness << "," << valence << "," << tempo << "\n";
+    s << danceability << "," << energy << "," << loudness << "," << speechiness << "," << acousticness << "," << instrumental << "," << liveness << "," << valence << "," << tempo << "\n";
     return s.str();
 }
+
 bool song::operator<(const song& s) const
 {
     return energy < s.energy;
@@ -159,5 +160,6 @@ bool song::operator<(const song& s) const
 
 bool song::operator==(const song& s) const
 {
-    return energy == s.energy && tempo == s.tempo;
+    return energy == s.energy && tempo == s.tempo && loudness == s.loudness && speechiness == s.speechiness &&
+           acousticness == s.acousticness && instrumental == s.instrumental && liveness == s.liveness && valence == s.valence && tempo == s.tempo;
 }
