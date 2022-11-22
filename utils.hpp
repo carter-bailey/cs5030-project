@@ -90,12 +90,12 @@ void writeToCSV(std::unordered_map<int, std::vector<song>> hash, std::vector<son
 	std::ofstream output_file("results.csv");
 	output_file << "centroid,danceability,energy,loudness,speechiness,\
     acousticness,instrumental,liveness,valence,tempo\n";
-	int counter = 0;
 	for (int i = 0; i < centroids.size(); i++)
 	{
+		std::cout << "Centroid " << i << " had " << hash[i].size() << " songs in it\n";
 		for (auto s : hash[i])
 		{
-			output_file << counter << "," << s.toString();
+			output_file << i << "," << s.toString();
 		}
 	}
 	output_file.close();

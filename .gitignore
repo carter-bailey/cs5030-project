@@ -1,5 +1,4 @@
 a.out
-*.ipynb
 build/*
 knn
 results.csv
