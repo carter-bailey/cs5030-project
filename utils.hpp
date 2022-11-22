@@ -5,9 +5,9 @@
 #include <functional>
 #include <iostream>
 #include <limits>
-#include <map>
 #include <random>
 #include <sstream>
+#include <unordered_map>
 #include <vector>
 
 #define DELIMITER ','
@@ -21,70 +21,82 @@
  */
 std::stringstream readFileIntoStringstream(const std::string& path)
 {
-    std::stringstream ss = std::stringstream();
-    std::ifstream input_file(path);
-    if (!input_file.is_open())
-    {
-        std::cerr << "Couldn't open the file - '" << path << "'" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    ss << input_file.rdbuf();
-    input_file.close();
-    return ss;
+	std::stringstream ss = std::stringstream();
+	std::ifstream input_file(path);
+	if (!input_file.is_open())
+	{
+		std::cerr << "Couldn't open the file - '" << path << "'" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	ss << input_file.rdbuf();
+	input_file.close();
+	return ss;
 }
 
+/**
+ * @brief gets the data of the csv and returns it as a vector of songs
+ *
+ * @return a vector of songs, the data in the csv has been converted to the song class
+ */
 std::vector<song> getCSV()
 {
-    std::stringstream csv = readFileIntoStringstream("genres_v2.csv");
-    std::vector<song> content;
-    std::vector<std::string> data;
+	std::stringstream csv = readFileIntoStringstream("genres_v2.csv");
+	std::vector<song> content;
+	std::vector<std::string> data;
 
-    // initialize our min and max
-    song min;
-    song max;
+	// initialize our min and max
+	song min;
+	song max;
 
-    std::string record;
+	std::string record;
 
-    // Remove the header of the csv file by reading in the first line
-    std::getline(csv, record);
+	// Remove the header of the csv file by reading in the first line
+	std::getline(csv, record);
 
-    while (std::getline(csv, record))
-    {
-        std::stringstream line(record);
-        while (std::getline(line, record, DELIMITER))
-        {
-            data.push_back(record);
-        }
+	while (std::getline(csv, record))
+	{
+		std::stringstream line(record);
+		while (std::getline(line, record, DELIMITER))
+		{
+			data.push_back(record);
+		}
 
-        song temp(data);
+		song temp(data);
 
-        // check to see if we have any new mins or maxes.
-        min.min(temp);
-        max.max(temp);
+		// check to see if we have any new mins or maxes.
+		min.min(temp);
+		max.max(temp);
 
-        content.push_back(temp);
-        data.clear();
-    }
-    for (song s : content)
-    {
-        s.standardize(min, max);
-    }
+		content.push_back(temp);
+		data.clear();
+	}
+	// standardize the data in the vector
+	for (song s : content)
+	{
+		s.standardize(min, max);
+	}
 
-    return content;
+	return content;
 }
 
-void writeToCSV(std::map<int, std::vector<song>> hash, std::vector<song> centroids)
+/**
+ * @brief writes the centroids and their songs to a csv for visualization purposes
+ *
+ * @param hash - the map containing all the centroids songs
+ * @param centroids - the centroids that we have been using
+ */
+void writeToCSV(std::unordered_map<int, std::vector<song>> hash, std::vector<song> centroids)
 {
-    std::ofstream output_file("results.csv");
-    output_file << "centroid,danceability,energy,loudness,speechiness,\
+	std::ofstream output_file("results.csv");
+	output_file << "centroid,danceability,energy,loudness,speechiness,\
     acousticness,instrumental,liveness,valence,tempo\n";
-    int counter = 0;
-    for (int i = 0; i < centroids.size(); i++)
-    {
-        for (auto s : hash[i])
-        {
-            output_file << counter << "," << s.toString();
-        }
-    }
-    output_file.close();
+	int counter = 0;
+	for (int i = 0; i < centroids.size(); i++)
+	{
+		for (auto s : hash[i])
+		{
+			output_file << counter << "," << s.toString();
+		}
+	}
+	output_file.close();
 }

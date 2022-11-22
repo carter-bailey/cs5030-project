@@ -5,9 +5,9 @@ BreakConstructorInitializers: AfterColon
 Cpp11BracedListStyle: false
 IndentCaseLabels: true
 NamespaceIndentation: All
-IndentWidth: 4
-TabWidth: 4
-UseTab: Never
+IndentWidth: 2
+TabWidth: 2
+UseTab: Always
 DerivePointerAlignment: false
 PointerAlignment: Left
 IncludeBlocks: Regroup
