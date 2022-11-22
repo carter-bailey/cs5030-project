@@ -139,6 +139,7 @@ std::string song::toString()
 	return s.str();
 }
 
+// These two operator overloads are required so that that the hashmap works
 bool song::operator<(const song& s) const
 {
 	return energy < s.energy;
