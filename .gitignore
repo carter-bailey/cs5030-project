@@ -2,3 +2,5 @@ a.out
 build/*
 knn
 results.csv
+/out
+/.vs
