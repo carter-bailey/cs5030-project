@@ -45,8 +45,8 @@ std::vector<song> getCSV()
 	std::vector<std::string> data;
 
 	// initialize our min and max
-	song min;
-	song max;
+	song min(std::numeric_limits<float>::max());
+	song max(std::numeric_limits<float>::min());
 
 	std::string record;
 
@@ -71,7 +71,7 @@ std::vector<song> getCSV()
 		data.clear();
 	}
 	// standardize the data in the vector
-	for (song s : content)
+	for (song& s : content)
 	{
 		s.standardize(min, max);
 	}

@@ -32,6 +32,8 @@ public:
 		reset();
 	}
 
+	song(float defaultNum);
+
 	song(std::vector<std::string>);
 	// randomly assign all of the variables a random number
 
@@ -43,6 +45,11 @@ public:
 	bool operator<(const song& s) const;
 	bool operator==(const song& s) const;
 };
+
+song::song(float defaultNum)
+{
+	danceability = energy = loudness = speechiness = acousticness = instrumental = liveness = valence = tempo = defaultNum;
+}
 
 // constructor for when a vector of strings is passed in, to be used when reading in csv data
 song::song(std::vector<std::string> data) :
@@ -92,6 +99,7 @@ void song::min(song s)
 	this->acousticness = this->acousticness > s.acousticness ? s.acousticness : this->acousticness;
 	this->instrumental = this->instrumental > s.instrumental ? s.instrumental : this->instrumental;
 	this->liveness = this->liveness > s.liveness ? s.liveness : this->liveness;
+	this->valence = this->valence > s.valence ? s.valence : this->valence;
 	this->tempo = this->tempo > s.tempo ? s.tempo : this->tempo;
 }
 
