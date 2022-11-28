@@ -1,4 +1,7 @@
 #include "knn.hpp"
+#include "openmp.hpp"
+
+#include <time.h>
 
 int main(int argc, char** argv)
 {
@@ -9,15 +12,32 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+	clock_t t;
 	std::cout << "Reading in the data and generating centroids\n";
 	auto data = getCSV();
 	auto centroids = generateCentroids(std::stoi(argv[1]), data);
 
-	std::cout << "Running the serial KNN algorithm\n";
+	std::cout << "Running the serial K Means algorithm\n";
+	t = clock();
 	auto hash = serialKNN(data, centroids);
+	t = clock() - t;
 
-	std::cout << "Writing the results out of the serial KNN algorithm\n";
-	writeToCSV(hash, centroids);
+	double time_taken = ((double)t) / CLOCKS_PER_SEC; // in seconds
+	std::cout << "Time for serial K Means is " << time_taken << "\n";
 
+	std::cout << "Writing the results out of the serial K Means algorithm\n";
+	writeToCSV(hash, centroids, "serialResults.csv");
+
+	auto data = getCSV();
+	auto centroids = generateCentroids(std::stoi(argv[1]), data);
+	std::cout << "Running the serial K Means algorithm\n";
+	t = clock();
+	auto hash = openMPKNN(data, centroids, 4);
+	t = clock() - t;
+
+	double time_taken = ((double)t) / CLOCKS_PER_SEC; // in seconds
+	std::cout << "Time for OpenMP K Means is " << time_taken << "\n";
+	std::cout << "Writing the results out of the serial K Means algorithm\n";
+	writeToCSV(hash, centroids, "serialResults.csv");
 	return 0;
 }

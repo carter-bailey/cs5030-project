@@ -85,9 +85,9 @@ std::vector<song> getCSV()
  * @param hash - the map containing all the centroids songs
  * @param centroids - the centroids that we have been using
  */
-void writeToCSV(std::unordered_map<int, std::vector<song>> hash, std::vector<song> centroids)
+void writeToCSV(std::unordered_map<int, std::vector<song>> hash, std::vector<song> centroids, std::string name = "results.csv")
 {
-	std::ofstream output_file("results.csv");
+	std::ofstream output_file(name);
 	output_file << "centroid,danceability,energy,loudness,speechiness,\
     acousticness,instrumental,liveness,valence,tempo\n";
 	for (int i = 0; i < centroids.size(); i++)
