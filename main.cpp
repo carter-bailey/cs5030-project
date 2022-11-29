@@ -1,7 +1,7 @@
-#include "knn.hpp"
+#include "kmeans.hpp"
 #include "openmp.hpp"
 
-#include <time.h>
+#include <chrono>
 
 int main(int argc, char** argv)
 {
@@ -12,33 +12,36 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	clock_t t;
 	std::cout << "Reading in the data and generating centroids\n";
 	auto data = getCSV();
-	auto centroids = generateCentroids(std::stoi(argv[1]), data);
+	int centroidCount = std::stoi(argv[1]);
+	auto centroids = generateCentroids(centroidCount, data);
+	std::vector<song> clusteredSongs[centroidCount];
 
+	// SERIAL
 	std::cout << "Running the serial K Means algorithm\n";
-	t = clock();
-	auto hash = serialKNN(data, centroids);
-	t = clock() - t;
+	auto start = std::chrono::high_resolution_clock::now();
+	serialKMeans(data, centroids, clusteredSongs);
+	auto stop = std::chrono::high_resolution_clock::now();
 
-	double time_taken = ((double)t) / CLOCKS_PER_SEC; // in seconds
+	auto time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
 	std::cout << "Time for serial K Means is " << time_taken << "\n";
 
 	std::cout << "Writing the results out of the serial K Means algorithm\n";
-	writeToCSV(hash, centroids, "serialResults.csv");
-	t = 0;
+	writeToCSV(clusteredSongs, centroids, "serialResults.csv");
 
+	// OPENMP
 	data = getCSV();
+	std::vector<song> clusteredSongsMP[centroidCount];
 	centroids = generateCentroids(std::stoi(argv[1]), data);
 	std::cout << "Running the OpenMP K Means algorithm\n";
-	t = clock();
-	hash = openMPKMean(data, centroids, 4);
-	t = clock() - t;
+	auto startMP = std::chrono::high_resolution_clock::now();
+	openMPKMean(data, centroids, clusteredSongsMP, 12);
+	auto stopMP = std::chrono::high_resolution_clock::now();
 
-	time_taken = ((double)t) / CLOCKS_PER_SEC; // in seconds
+	time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(stopMP - startMP);
 	std::cout << "Time for OpenMP K Means is " << time_taken << "\n";
 	std::cout << "Writing the results out of the serial K Means algorithm\n";
-	writeToCSV(hash, centroids, "serialResults.csv");
+	writeToCSV(clusteredSongsMP, centroids, "OpenMPResults.csv");
 	return 0;
 }

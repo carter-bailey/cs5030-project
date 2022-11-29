@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 set(SOURCE_FILES main.cpp )
-set(HEADER_FILES utils.hpp knn.hpp song.hpp )
+set(HEADER_FILES utils.hpp kmeans.hpp song.hpp openmp.hpp)
 set(PROJECTNAME knn)
 
 project(${PROJECTNAME})

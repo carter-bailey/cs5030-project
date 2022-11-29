@@ -1,4 +1,6 @@
 a.out
 build/*
 knn
-*results.csv
+results.csv
+OpenMPResults.csv
+serialResults.csv
