@@ -27,15 +27,16 @@ int main(int argc, char** argv)
 
 	std::cout << "Writing the results out of the serial K Means algorithm\n";
 	writeToCSV(hash, centroids, "serialResults.csv");
+	t = 0;
 
-	auto data = getCSV();
-	auto centroids = generateCentroids(std::stoi(argv[1]), data);
-	std::cout << "Running the serial K Means algorithm\n";
+	data = getCSV();
+	centroids = generateCentroids(std::stoi(argv[1]), data);
+	std::cout << "Running the OpenMP K Means algorithm\n";
 	t = clock();
-	auto hash = openMPKNN(data, centroids, 4);
+	hash = openMPKMean(data, centroids, 4);
 	t = clock() - t;
 
-	double time_taken = ((double)t) / CLOCKS_PER_SEC; // in seconds
+	time_taken = ((double)t) / CLOCKS_PER_SEC; // in seconds
 	std::cout << "Time for OpenMP K Means is " << time_taken << "\n";
 	std::cout << "Writing the results out of the serial K Means algorithm\n";
 	writeToCSV(hash, centroids, "serialResults.csv");

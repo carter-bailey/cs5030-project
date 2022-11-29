@@ -13,19 +13,19 @@
  *
  * @return a map containing the songs that are closest to each centroid
  */
-std::unordered_map<int, std::vector<song>> openMPKNN(std::vector<song> data, std::vector<song> centroids, int thread_count)
+std::unordered_map<int, std::vector<song>> openMPKMean(std::vector<song> data, std::vector<song> centroids, int thread_count)
 {
 	// unordered map has o(n) operations instead of maps o(logn) operations
 	// we don't need the map to be ordered so we'll take the speedup
 	std::unordered_map<int, std::vector<song>> hash;
-  int j;
+  long unsigned int j;
 	int centroid;
   #pragma omp parallel num_threads(thread_count) \
-    default(none) private(j, centroid) shared(i,hash, data, centroids)
+    default(none) private(j, centroid) shared(hash, data, centroids)
 
 	for (int i = 0; i < ROUNDS; i++)
 	{
-    #pragma omp for schedule(dynamic)
+    #pragma omp for 
 		for (j = 0; j < data.size(); j++)
 		{
 			centroid = findClosestCentroid(data[j], centroids);
@@ -33,7 +33,7 @@ std::unordered_map<int, std::vector<song>> openMPKNN(std::vector<song> data, std
 			hash[centroid].push_back(data[j]);
 		}
 
-    #pragma omp for schedule(dynamic)
+    #pragma omp for
 		for (j = 0; j < centroids.size(); j++)
 		{
 			updateCentroid(centroids[j], hash[j]);

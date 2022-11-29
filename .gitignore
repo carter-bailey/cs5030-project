@@ -1,4 +1,4 @@
 a.out
 build/*
 knn
-results.csv
+*results.csv

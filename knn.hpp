@@ -45,7 +45,7 @@ std::vector<song> generateCentroids(int count, std::vector<song> s)
 void updateCentroid(song& centroid, std::vector<song> songs)
 {
 	centroid.reset();
-	for (int i = 0; i < songs.size(); i++)
+	for (long unsigned int i = 0; i < songs.size(); i++)
 	{
 		centroid.danceability += songs[i].danceability;
 		centroid.energy += songs[i].energy;
@@ -77,8 +77,8 @@ void updateCentroid(song& centroid, std::vector<song> songs)
 int findClosestCentroid(song s, std::vector<song> centroids)
 {
 	float distance, minDistance = std::numeric_limits<float>::max();
-	int troid;
-	for (int i = 0; i < centroids.size(); i++)
+	int troid = -1;
+	for (long unsigned int i = 0; i < centroids.size(); i++)
 	{
 		distance = centroids[i].distance(s);
 		if (distance < minDistance)
@@ -106,12 +106,12 @@ std::unordered_map<int, std::vector<song>> serialKNN(std::vector<song> data, std
 	for (int i = 0; i < ROUNDS; i++)
 	{
 		int centroid;
-		for (int j = 0; j < data.size(); j++)
+		for (long unsigned int j = 0; j < data.size(); j++)
 		{
 			centroid = findClosestCentroid(data[j], centroids);
 			hash[centroid].push_back(data[j]);
 		}
-		for (int j = 0; j < centroids.size(); j++)
+		for (long unsigned int j = 0; j < centroids.size(); j++)
 		{
 			updateCentroid(centroids[j], hash[j]);
 			// don't clear the vectors in the hash on the last round
