@@ -25,7 +25,7 @@ int main(int argc, char** argv)
 	auto stop = std::chrono::high_resolution_clock::now();
 
 	auto time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-	std::cout << "Time for serial K Means is " << time_taken << "\n";
+	std::cout << "Time for serial K Means is " << time_taken.count() << " ms\n";
 
 	std::cout << "Writing the results out of the serial K Means algorithm\n";
 	writeToCSV(clusteredSongs, centroids, "serialResults.csv");
@@ -40,7 +40,7 @@ int main(int argc, char** argv)
 	auto stopMP = std::chrono::high_resolution_clock::now();
 
 	time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(stopMP - startMP);
-	std::cout << "Time for OpenMP K Means is " << time_taken << "\n";
+	std::cout << "Time for OpenMP K Means is " << time_taken.count() << " ms\n";
 	std::cout << "Writing the results out of the serial K Means algorithm\n";
 	writeToCSV(clusteredSongsMP, centroids, "OpenMPResults.csv");
 	return 0;

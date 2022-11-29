@@ -15,19 +15,19 @@ void openMPKMean(std::vector<song> data, std::vector<song> centroids, std::vecto
 {
 	long unsigned int j;
 	int centroid;
-  #pragma omp parallel num_threads(threadCount) default(none) private(j, centroid) shared(clusteredSongs, data, centroids)
+#pragma omp parallel num_threads(threadCount) default(none) private(j, centroid) shared(clusteredSongs, data, centroids)
 
 	for (int i = 0; i < ROUNDS; i++)
 	{
-  #pragma omp for
+#pragma omp for
 		for (j = 0; j < data.size(); j++)
 		{
 			centroid = findClosestCentroid(data[j], centroids);
-  #pragma omp critical
+#pragma omp critical
 			clusteredSongs[centroid].push_back(data[j]);
 		}
 
-  #pragma omp for
+#pragma omp for
 		for (j = 0; j < centroids.size(); j++)
 		{
 			updateCentroid(centroids[j], clusteredSongs[j]);
