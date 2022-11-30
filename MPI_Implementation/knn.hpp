@@ -90,21 +90,15 @@ int findClosestCentroid(song s, std::vector<song> centroids)
 	return troid;
 }
 
+
+// Gather all the weighted average centroids and compute the new centroids
 std::vector<song> averageCentroids(std::vector<song> centroids, std::vector<int> centroidCounts){
 	
 
 
 }
 
-void recreateSongs(std::vector<song> &songs, float* songNumbers, int songCount, int rank, int totalProcesses){
-	if(rank == 0){
-		std::vector<song> temp;
-		int remainder = songs.size() % totalProcesses;
-		for(int i = 0; i < remainder; i++){
-			temp.push_back(songs[songs.size() - i - 1]);
-		}
-		songs = temp;
-	} 
+void recreateSongs(std::vector<song> &songs, float* songNumbers, int songCount){
 	// Create the songs from the song data
 	for(int i = 0; i < songCount; i++){
 		song s;
@@ -121,8 +115,46 @@ void recreateSongs(std::vector<song> &songs, float* songNumbers, int songCount, 
 	}
 }
 
+// Create counts and displacements arrays
+void createCountsAndDisplacements(std::vector<int>& counts, std::vector<int>& displacements, int songCount, int totalProcesses){
+	int offset = 0;
+	for(int i = 0; i < totalProcesses; i++){
+		counts.push_back(songCount * song::NUM_FEATURES);
+		displacements.push_back(offset);
+		offset += song::NUM_FEATURES * songCount;
+	}
+}
 
-float* distributeData(std::vector<song>& songs, std::vector<song>& centroids, int rank, int totalProcesses)
+// Create the song data array to send to the processes 
+void createSongDataArray(std::vector<float>& songData, std::vector<song> songs){
+	for(int i = 0; i < songs.size(); i++){
+		float* temp = songs[i].toArray();
+		for(int j = 0; j < song::NUM_FEATURES; j++){
+			songData.push_back(temp[j]);
+		}
+	}
+}
+
+// Send the centroids to the processes
+void distributeCentroids(std::vector<song>& centroids, int rank, int totalProcesses){
+	std::vector<float> centroidData;
+	int centroidCount = centroids.size();
+	MPI_Bcast(&centroidCount, 1, MPI_INT, 0, MCW);
+	float* centroidNumbers;
+	if(rank == 0) {
+		createSongDataArray(centroidData, centroids);
+		centroidNumbers = centroidData.data();
+	}
+	else{
+		centroidNumbers = (float*)malloc(sizeof(float) * centroidCount * song::NUM_FEATURES);
+	}
+
+	MPI_Bcast(centroidNumbers, centroidCount * song::NUM_FEATURES, MPI_FLOAT, 0, MCW);
+	if(rank != 0) recreateSongs(centroids, centroidNumbers, centroidCount);
+	std::cout << "Process " << rank << " has " << centroids.size() << " centroids" << std::endl;
+}
+
+float* distributeData(std::vector<song>& songs, int rank, int totalProcesses)
 {
 	std::vector<float> songData;
 	int songCount = songs.size() / totalProcesses;
@@ -132,39 +164,34 @@ float* distributeData(std::vector<song>& songs, std::vector<song>& centroids, in
 	{
 		std::vector<int> counts;
 		std::vector<int> displacements;
-		int offset = 0;
-		// Create counts and displacements arrays
-		for(int i = 0; i < totalProcesses; i++){
-			counts.push_back(songCount * song::NUM_FEATURES);
-			displacements.push_back(offset);
-			offset += song::NUM_FEATURES * songCount;
-		}
-		
-		// Create the song data array to send to the various processes 
-		for(int i = 0; i < songs.size(); i++){
-			float* temp = songs[i].toArray();
-			for(int j = 0; j < song::NUM_FEATURES; j++){
-				songData.push_back(temp[j]);
-			}
-		}
-
+		createCountsAndDisplacements(counts, displacements, songCount, totalProcesses);
+		createSongDataArray(songData, songs);
 		MPI_Scatterv(songData.data(), counts.data(), displacements.data(), MPI_FLOAT, songNumbers, songCount * song::NUM_FEATURES, MPI_FLOAT, 0, MCW);
 	}
 	else
 	{
 		MPI_Scatterv(NULL, NULL, NULL, MPI_FLOAT, songNumbers, songCount * song::NUM_FEATURES, MPI_FLOAT, 0, MCW);
 	}
-
-	recreateSongs(songs, songNumbers, songCount, rank, totalProcesses);
+	
+	// Recover any remaining songs
+	if(rank == 0){
+		std::vector<song> temp;
+		int remainder = songs.size() % totalProcesses;
+		for(int i = 0; i < remainder; i++){
+			temp.push_back(songs[songs.size() - i - 1]);
+		}
+		songs = temp;
+	} 
+	// Recreate process specfic songs
+	recreateSongs(songs, songNumbers, songCount);
 }
 
 
 std::unordered_map<int, std::vector<song>> MPI_KNN(std::vector<song> data, std:: vector<song> centroids, int rank, int size){
 	// unordered map has o(n) operations instead of maps o(logn) operations
 	// we don't need the map to be ordered so we'll take the speedup
-	std::cout << "Distribution started" << std::endl;
-	distributeData(data, centroids, rank, size);
-	std::cout << "My rank is " << rank << " and I have " << data.size() << " songs" << std::endl;
+	distributeData(data, rank, size);
+	distributeCentroids(centroids, rank, size);
 	std::unordered_map<int, std::vector<song>> hash;
 	// std::vector<int> centroidCounts;
 	// for (int i = 0; i < ROUNDS; i++)
