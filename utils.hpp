@@ -7,7 +7,6 @@
 #include <limits>
 #include <random>
 #include <sstream>
-#include <unordered_map>
 #include <vector>
 
 #define DELIMITER ','
@@ -85,15 +84,14 @@ std::vector<song> getCSV()
  * @param hash - the map containing all the centroids songs
  * @param centroids - the centroids that we have been using
  */
-void writeToCSV(std::unordered_map<int, std::vector<song>> hash, std::vector<song> centroids)
+void writeToCSV(std::vector<song>* clusteredSongs, std::vector<song> centroids, std::string name = "results.csv")
 {
-	std::ofstream output_file("results.csv");
+	std::ofstream output_file(name);
 	output_file << "centroid,danceability,energy,loudness,speechiness,\
     acousticness,instrumental,liveness,valence,tempo\n";
-	for (int i = 0; i < centroids.size(); i++)
+	for (long unsigned int i = 0; i < centroids.size(); i++)
 	{
-		std::cout << "Centroid " << i << " had " << hash[i].size() << " songs in it\n";
-		for (auto s : hash[i])
+		for (auto s : clusteredSongs[i])
 		{
 			output_file << i << "," << s.toString();
 		}

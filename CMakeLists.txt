@@ -1,12 +1,13 @@
 cmake_minimum_required(VERSION 3.12)
 
 set(SOURCE_FILES main.cpp )
-set(HEADER_FILES utils.hpp knn.hpp song.hpp )
+set(HEADER_FILES utils.hpp kmeans.hpp song.hpp openmp.hpp)
 set(PROJECTNAME knn)
 
 project(${PROJECTNAME})
-# randDistributions
+find_package(OpenMP REQUIRED)
 add_executable(${PROJECTNAME} ${SOURCE_FILES} ${HEADER_FILES})
+target_link_libraries(${PROJECTNAME} PRIVATE OpenMP::OpenMP_CXX)
 set_property(TARGET ${PROJECTNAME} PROPERTY CXX_STANDARD 20)
 
 set_property(TARGET ${GTESTNAME} PROPERTY CXX_STANDARD 20)
@@ -16,9 +17,9 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   target_compile_options(${PROJECTNAME} PRIVATE /W4 /permissive-)  
   set_target_properties(${PROJECTNAME} PROPERTIES LINK_FLAGS "/STACK:10000000")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  target_compile_options(${PROJECTNAME} PRIVATE -Wall -Wextra -pedantic -Wl,--stack,10000000 -O3)
+  target_compile_options(${PROJECTNAME} PRIVATE -Wall -Wextra -pedantic -O3 -fopenmp)
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "CLANG")
-  target_compile_options(${PROJECTNAME} PRIVATE -Wall -Wextra -pedantic -Wl,--stack,10000000 -O3)
+  target_compile_options(${PROJECTNAME} PRIVATE -Wall -Wextra -pedantic -O3 -fopenmp)
 endif()
 
 find_program(CLANG_FORMAT "clang-format")

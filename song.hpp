@@ -65,6 +65,19 @@ song::song(std::vector<std::string> data) :
 {
 }
 
+song::song(float[] data) :
+		danceability(data[0]),
+		energy(data[1]),
+		loudness(data[3]),
+		speechiness(data[5]),
+		acousticness(data[6]),
+		instrumental(data[7]),
+		liveness(data[8]),
+		valence(data[9]),
+		tempo(data[10])
+{
+}
+
 /**
  * @brief Provides a distance measurement between two songs
  *
@@ -145,6 +158,12 @@ std::string song::toString()
 	std::stringstream s;
 	s << danceability << "," << energy << "," << loudness << "," << speechiness << "," << acousticness << "," << instrumental << "," << liveness << "," << valence << "," << tempo << "\n";
 	return s.str();
+}
+
+float[] song::toArray()
+{
+	float[] arr = {danceability, energy, loudness, speechiness, acousticness, instrumental, liveness, valence, tempo};
+	return arr;
 }
 
 // These two operator overloads are required so that that the hashmap works
