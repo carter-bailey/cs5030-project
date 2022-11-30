@@ -2,5 +2,7 @@ a.out
 build/*
 knn
 results.csv
+OpenMPResults.csv
+serialResults.csv
 /out
 /.vs
