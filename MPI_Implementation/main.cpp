@@ -28,12 +28,12 @@ int main(int argc, char** argv)
 	
 	std::vector<song> clusteredSongsMPI[centroidCount];
 	
-	std::cout << "Running the MPI KNN algorithm\n";
+	if(rank == 0) std::cout << "Running the MPI KNN algorithm\n";
 	MPI_KNN(data, centroids, clusteredSongsMPI, rank, size);
 
 	if(rank == 0){
-		std::cout << "Writing the results out of the serial KNN algorithm\n";
-		writeToCSV(clusteredSongsMPI, centroids);
+		std::cout << "Writing the results out of the MPI KNN algorithm\n";
+		writeToCSV(clusteredSongsMPI, centroids, "MPIResults.csv");
 	}
 
     MPI_Finalize();
