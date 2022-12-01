@@ -18,18 +18,23 @@ int main(int argc, char** argv)
 	}
 	std::vector<song> data;
 	std::vector<song> centroids;
+	int centroidCount = std::stoi(argv[1]);
 	if(rank == 0){
 		std::cout << "Reading in the data and generating centroids\n";
 		data = getCSV();
-		centroids = generateCentroids(std::stoi(argv[1]), data);
+		centroids = generateCentroids(centroidCount, data);
 	}
 	MPI_Barrier(MCW);
 	
+	std::vector<song> clusteredSongsMPI[centroidCount];
+	
 	std::cout << "Running the MPI KNN algorithm\n";
-	auto hash = MPI_KNN(data, centroids, rank, size);
+	MPI_KNN(data, centroids, clusteredSongsMPI, rank, size);
 
-	std::cout << "Writing the results out of the serial KNN algorithm\n";
-	writeToCSV(hash, centroids);
+	if(rank == 0){
+		std::cout << "Writing the results out of the serial KNN algorithm\n";
+		writeToCSV(clusteredSongsMPI, centroids);
+	}
 
     MPI_Finalize();
 	return 0;

@@ -90,13 +90,40 @@ int findClosestCentroid(song s, std::vector<song> centroids)
 	return troid;
 }
 
-
-// Gather all the weighted average centroids and compute the new centroids
-std::vector<song> averageCentroids(std::vector<song> centroids, std::vector<int> centroidCounts){
-	
-
-
+std::vector<song> computeAverageCentroids(std::vector<song> allCentroids, int* centroidCounts, int numCentroids){
+	std::vector<song> averageCentroids;
+	for(int i = 0; i < numCentroids; i++){
+		song newCentroid;
+		int totalSongsNearThisCentroid = 0;
+		for(int j = i; j < allCentroids.size(); j += numCentroids){
+			// std::cout << "Computing for " << j << std::endl;
+			totalSongsNearThisCentroid += centroidCounts[j];
+			newCentroid.danceability += allCentroids[j].danceability * centroidCounts[j];
+			newCentroid.energy += allCentroids[j].energy * centroidCounts[j];
+			newCentroid.loudness += allCentroids[j].loudness * centroidCounts[j];
+			newCentroid.speechiness += allCentroids[j].speechiness * centroidCounts[j];
+			newCentroid.acousticness += allCentroids[j].acousticness * centroidCounts[j];
+			newCentroid.instrumental += allCentroids[j].instrumental * centroidCounts[j];
+			newCentroid.liveness += allCentroids[j].liveness * centroidCounts[j];
+			newCentroid.valence += allCentroids[j].valence * centroidCounts[j];
+			newCentroid.tempo += allCentroids[j].tempo * centroidCounts[j];
+		}
+		std::cout << "Total danceablity: " << newCentroid.danceability << " divided by "<< totalSongsNearThisCentroid <<std::endl;
+		newCentroid.danceability /= totalSongsNearThisCentroid;
+		newCentroid.energy /= totalSongsNearThisCentroid;
+		newCentroid.loudness /= totalSongsNearThisCentroid;
+		newCentroid.speechiness /= totalSongsNearThisCentroid;
+		newCentroid.acousticness /= totalSongsNearThisCentroid;
+		newCentroid.instrumental /= totalSongsNearThisCentroid;
+		newCentroid.liveness /= totalSongsNearThisCentroid;
+		newCentroid.valence /= totalSongsNearThisCentroid;
+		newCentroid.tempo /= totalSongsNearThisCentroid;
+		averageCentroids.push_back(newCentroid);
+	}
+	return averageCentroids;
 }
+
+
 
 void recreateSongs(std::vector<song> &songs, float* songNumbers, int songCount){
 	// Create the songs from the song data
@@ -151,7 +178,7 @@ void distributeCentroids(std::vector<song>& centroids, int rank, int totalProces
 
 	MPI_Bcast(centroidNumbers, centroidCount * song::NUM_FEATURES, MPI_FLOAT, 0, MCW);
 	if(rank != 0) recreateSongs(centroids, centroidNumbers, centroidCount);
-	std::cout << "Process " << rank << " has " << centroids.size() << " centroids" << std::endl;
+	// std::cout << "Process " << rank << " has " << centroids.size() << " centroids" << std::endl;
 }
 
 float* distributeData(std::vector<song>& songs, int rank, int totalProcesses)
@@ -182,43 +209,116 @@ float* distributeData(std::vector<song>& songs, int rank, int totalProcesses)
 		}
 		songs = temp;
 	} 
-	// Recreate process specfic songs
+	// Recreate process specific songs
 	recreateSongs(songs, songNumbers, songCount);
 }
 
 
-std::unordered_map<int, std::vector<song>> MPI_KNN(std::vector<song> data, std:: vector<song> centroids, int rank, int size){
+// Gather all the weighted average centroids and compute the new centroids
+std::vector<song> averageCentroids(std::vector<song> centroids, std::vector<int> centroidCounts, int numCentroids, int rank, int size){
+	std::vector<int> counts;
+	std::vector<int> displacements;
+	float* centroidData = new float[numCentroids * song::NUM_FEATURES * size];
+	int* centroidCountsData = new int[numCentroids * size];
+	createCountsAndDisplacements(counts, displacements, numCentroids, size);
+	MPI_Gatherv(centroids.data(), numCentroids * song::NUM_FEATURES, MPI_FLOAT, centroidData, counts.data(), displacements.data(), MPI_FLOAT, 0, MCW);
+	MPI_Gather(centroidCounts.data(), numCentroids, MPI_INT, centroidCountsData, numCentroids, MPI_INT, 0, MCW);
+	std::vector<song> averagedCentroids;
+	if(rank == 0){
+		std::vector<song> allCentroids;
+		recreateSongs(allCentroids, centroidData, size * numCentroids);
+		averagedCentroids = computeAverageCentroids(allCentroids, centroidCountsData, numCentroids);
+	}
+	distributeCentroids(averagedCentroids, rank, size);
+	return averagedCentroids;
+}
+
+void gatherClusteredSongs(std::vector<song>* songs, int centroidCount, int totalSongs, int rank, int size){
+	std::vector<int> counts;
+	std::vector<int> displacements;
+	// for(int i = 0; i < size; i++){
+	// 		std::cout << "Rank " << rank << " has " << songs[i].size() << " songs for centroid " << i << std::endl;
+	// }
+	for(int i = 0; i < centroidCount; i++){
+		int* songCountsForThisCentroid = new int[size];
+		int songsFromThisRank = songs[i].size();
+		
+		MPI_Gather(&songsFromThisRank, 1, MPI_INT, songCountsForThisCentroid, 1, MPI_INT, 0, MCW);
+		int offset = 0;
+		int totalSongsForThisCentroid = 0;
+		if(rank == 0){
+			for(int j = 0; j < size; j++){
+				// std::cout << "Process " << j << " has " << songCountsForThisCentroid[j] << " songs for centroid " << i << std::endl;
+				counts.push_back(songCountsForThisCentroid[j] * song::NUM_FEATURES);
+				displacements.push_back(offset);
+				offset += songCountsForThisCentroid[j] * song::NUM_FEATURES;
+				totalSongsForThisCentroid += songCountsForThisCentroid[j];
+			}
+			// std::cout << "Total songs for centroid " << i << " is " << totalSongsForThisCentroid << " with offset " << offset << std::endl;
+		}
+		std::vector<float> songData;
+		createSongDataArray(songData, songs[i]);
+		float* songNumbers = new float[offset];
+		// std::cout << "Rank " << rank << " has " << songs[i].size() << " songs for centroid " << i << std::endl;
+		MPI_Gatherv(songData.data(), songs[i].size() * song::NUM_FEATURES, MPI_FLOAT, songNumbers, counts.data(), displacements.data(), MPI_FLOAT, 0, MCW);
+		counts.clear();
+		displacements.clear();
+		if(rank == 0){
+			std::vector<song> allSongs;
+			recreateSongs(allSongs, songNumbers, totalSongsForThisCentroid);
+			songs[i] = allSongs;
+			std::cout << "\t\tTotal songs for centroid " << i << " is " << songs[i].size() << std::endl;
+		}
+		delete songNumbers;
+	}
+}
+
+
+void MPI_KNN(std::vector<song> data, std:: vector<song> centroids, std::vector<song>* clusteredSongs, int rank, int size){
 	// unordered map has o(n) operations instead of maps o(logn) operations
 	// we don't need the map to be ordered so we'll take the speedup
+	int totalSongs = 0;
+	if(rank == 0) totalSongs = data.size();
 	distributeData(data, rank, size);
 	distributeCentroids(centroids, rank, size);
-	std::unordered_map<int, std::vector<song>> hash;
-	// std::vector<int> centroidCounts;
-	// for (int i = 0; i < ROUNDS; i++)
-	// {
-	// 	int centroid;
-	// 	for (int j = 0; j < data.size(); j++)
-	// 	{
-	// 		centroid = findClosestCentroid(data[j], centroids);
-	// 		hash[centroid].push_back(data[j]);
-	// 	}
-	// 	for (int j = 0; j < centroids.size(); j++)
-	// 	{
-	// 		updateCentroid(centroids[j], hash[j]);
-	// 		centroidCounts.push_back(hash[j].count());
-	// 		// don't clear the vectors in the hash on the last round
-	// 		if (i < ROUNDS - 1)
-	// 		{
-	// 			hash[j].clear();
-	// 		}
-	// 	}
-	// 	centroids = averageCentroids(centroids, centroidCounts);
-	// 	centroidCounts.clear();
-	// } 
+
+	if(rank == 0){
+		for(int i = 0; i < centroids.size(); i++){
+			std::cout << "Centroid " << i << " is " << centroids[i].toString() << std::endl;
+		}
+	}
+
+	std::vector<int> centroidCounts;
+	for (int i = 0; i < ROUNDS; i++)
+	{
+		int centroid;
+		for (long unsigned int j = 0; j < data.size(); j++)
+		{
+			centroid = findClosestCentroid(data[j], centroids);
+			clusteredSongs[centroid].push_back(data[j]);
+		}
+		for (long unsigned int j = 0; j < centroids.size(); j++)
+		{
+			std::cout << "Centrid count for " << j << " is " << clusteredSongs[j].size() << std::endl;
+			updateCentroid(centroids[j], clusteredSongs[j]);
+			centroidCounts.push_back(clusteredSongs[j].size());
+			// don't clear the vectors in the hash on the last round
+			if (i < ROUNDS - 1)
+			{
+				clusteredSongs[j].clear();
+			}
+		}
+		centroids = averageCentroids(centroids, centroidCounts, centroids.size(), rank, size);
+		if(rank == 0) {
+			for(int i = 0; i < centroids.size(); i++){
+				std::cout << "Centroid " << i << " is " << centroids[i].toString() << std::endl;
+			}
+		}
+		centroidCounts.clear();
+	} 
 
 	// Bring all the data back together for the 0th process to return
-	// MPI_Gather();
-	return hash;
+	gatherClusteredSongs(clusteredSongs, centroids.size(), totalSongs, rank, size);
 }
 
 /*
@@ -229,28 +329,30 @@ std::unordered_map<int, std::vector<song>> MPI_KNN(std::vector<song> data, std::
  *
  * @return a map containing the songs that are closest to each centroid
  */
-std::unordered_map<int, std::vector<song>> serialKNN(std::vector<song> data, std::vector<song> centroids)
+void serialKMeans(std::vector<song> data, std::vector<song> centroids, std::vector<song>* clusteredSongs)
 {
 	// unordered map has o(n) operations instead of maps o(logn) operations
 	// we don't need the map to be ordered so we'll take the speedup
-	std::unordered_map<int, std::vector<song>> hash;
+
 	for (int i = 0; i < ROUNDS; i++)
 	{
 		int centroid;
-		for (int j = 0; j < data.size(); j++)
+		for (long unsigned int j = 0; j < data.size(); j++)
 		{
 			centroid = findClosestCentroid(data[j], centroids);
-			hash[centroid].push_back(data[j]);
+			clusteredSongs[centroid].push_back(data[j]);
 		}
-		for (int j = 0; j < centroids.size(); j++)
+		for (long unsigned int j = 0; j < centroids.size(); j++)
 		{
-			updateCentroid(centroids[j], hash[j]);
+			updateCentroid(centroids[j], clusteredSongs[j]);
 			// don't clear the vectors in the hash on the last round
 			if (i < ROUNDS - 1)
 			{
-				hash[j].clear();
+				clusteredSongs[j].clear();
+			}
+			for(int i = 0; i < centroids.size(); i++){
+				std::cout << "Centroid " << i << " is " << centroids[i].toString() << std::endl;
 			}
 		}
 	}
-	return hash;
 }
