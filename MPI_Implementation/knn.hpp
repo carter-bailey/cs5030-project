@@ -173,7 +173,7 @@ float* distributeData(std::vector<song>& songs, int rank, int totalProcesses)
 		MPI_Scatterv(NULL, NULL, NULL, MPI_FLOAT, songNumbers, songCount * song::NUM_FEATURES, MPI_FLOAT, 0, MCW);
 	}
 	
-	// Recover any remaining songs
+	// Account for the remaining songs that weren't sent out
 	if(rank == 0){
 		std::vector<song> temp;
 		int remainder = songs.size() % totalProcesses;
