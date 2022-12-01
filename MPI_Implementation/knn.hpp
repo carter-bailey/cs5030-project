@@ -97,7 +97,7 @@ void updateCentroid(song& centroid, std::vector<song> songs)
  */
 int findClosestCentroid(song s, std::vector<song> centroids)
 {
-	double distance, minDistance = std::numeric_limits<double>::max();
+	float distance, minDistance = std::numeric_limits<float>::max();
 	int troid;
 	for (int i = 0; i < centroids.size(); i++)
 	{
@@ -112,7 +112,7 @@ int findClosestCentroid(song s, std::vector<song> centroids)
 }
 
 
-void recreateSongs(std::vector<song> &songs, double* songNumbers, int songCount){
+void recreateSongs(std::vector<song> &songs, float* songNumbers, int songCount){
 	// Create the songs from the song data
 	for(int i = 0; i < songCount; i++){
 		song s;
@@ -140,9 +140,9 @@ void createCountsAndDisplacements(std::vector<int>& counts, std::vector<int>& di
 }
 
 // Create the song data array to send to the processes 
-void createSongDataArray(std::vector<double>& songData, std::vector<song> songs){
+void createSongDataArray(std::vector<float>& songData, std::vector<song> songs){
 	for(int i = 0; i < songs.size(); i++){
-		double* temp = songs[i].toArray();
+		float* temp = songs[i].toArray();
 		for(int j = 0; j < song::NUM_FEATURES; j++){
 			songData.push_back(temp[j]);
 		}
@@ -151,39 +151,39 @@ void createSongDataArray(std::vector<double>& songData, std::vector<song> songs)
 
 // Send the centroids to the processes
 void distributeCentroids(std::vector<song>& centroids, int rank, int totalProcesses){
-	std::vector<double> centroidData;
+	std::vector<float> centroidData;
 	int centroidCount = centroids.size();
 	MPI_Bcast(&centroidCount, 1, MPI_INT, 0, MCW);
-	double* centroidNumbers;
+	float* centroidNumbers;
 	if(rank == 0) {
 		createSongDataArray(centroidData, centroids);
 		centroidNumbers = centroidData.data();
 	}
 	else{
-		centroidNumbers = (double*)malloc(sizeof(double) * centroidCount * song::NUM_FEATURES);
+		centroidNumbers = (float*)malloc(sizeof(float) * centroidCount * song::NUM_FEATURES);
 	}
 
-	MPI_Bcast(centroidNumbers, centroidCount * song::NUM_FEATURES, MPI_DOUBLE, 0, MCW);
+	MPI_Bcast(centroidNumbers, centroidCount * song::NUM_FEATURES, MPI_FLOAT, 0, MCW);
 	if(rank != 0) recreateSongs(centroids, centroidNumbers, centroidCount);
 }
 
-double* distributeData(std::vector<song>& songs, int rank, int totalProcesses)
+float* distributeData(std::vector<song>& songs, int rank, int totalProcesses)
 {
-	std::vector<double> songData;
+	std::vector<float> songData;
 	int songCount = songs.size() / totalProcesses;
 	MPI_Bcast(&songCount, 1, MPI_INT, 0, MCW);
-	double* songNumbers = (double*)malloc(sizeof(double) * songCount * song::NUM_FEATURES);
+	float* songNumbers = (float*)malloc(sizeof(float) * songCount * song::NUM_FEATURES);
 	if (rank == 0)
 	{
 		std::vector<int> counts;
 		std::vector<int> displacements;
 		createCountsAndDisplacements(counts, displacements, songCount, totalProcesses);
 		createSongDataArray(songData, songs);
-		MPI_Scatterv(songData.data(), counts.data(), displacements.data(), MPI_DOUBLE, songNumbers, songCount * song::NUM_FEATURES, MPI_DOUBLE, 0, MCW);
+		MPI_Scatterv(songData.data(), counts.data(), displacements.data(), MPI_FLOAT, songNumbers, songCount * song::NUM_FEATURES, MPI_FLOAT, 0, MCW);
 	}
 	else
 	{
-		MPI_Scatterv(NULL, NULL, NULL, MPI_DOUBLE, songNumbers, songCount * song::NUM_FEATURES, MPI_DOUBLE, 0, MCW);
+		MPI_Scatterv(NULL, NULL, NULL, MPI_FLOAT, songNumbers, songCount * song::NUM_FEATURES, MPI_FLOAT, 0, MCW);
 	}
 	
 	// Account for the remaining songs that weren't sent out
@@ -219,10 +219,10 @@ void gatherClusteredSongs(std::vector<song>* songs, int centroidCount, int rank,
 				totalSongsForThisCentroid += songCountsForThisCentroid[j];
 			}
 		}
-		std::vector<double> songData;
+		std::vector<float> songData;
 		createSongDataArray(songData, songs[i]);
-		double* songNumbers = new double[offset];
-		MPI_Gatherv(songData.data(), songs[i].size() * song::NUM_FEATURES, MPI_DOUBLE, songNumbers, counts.data(), displacements.data(), MPI_DOUBLE, 0, MCW);
+		float* songNumbers = new float[offset];
+		MPI_Gatherv(songData.data(), songs[i].size() * song::NUM_FEATURES, MPI_FLOAT, songNumbers, counts.data(), displacements.data(), MPI_FLOAT, 0, MCW);
 		counts.clear();
 		displacements.clear();
 		if(rank == 0){
@@ -238,9 +238,9 @@ void gatherClusteredSongs(std::vector<song>* songs, int centroidCount, int rank,
 // Gather all the weighted average centroids and compute the new centroids
 std::vector<song> averageCentroids(std::vector<song> centroids, std::vector<int> centroidCounts){
 	for(int i = 0; i < centroids.size(); i++){
-		double* centroidAttributeSums = (double*)malloc(sizeof(double) * song::NUM_FEATURES);
+		float* centroidAttributeSums = (float*)malloc(sizeof(float) * song::NUM_FEATURES);
 		// Gather the sum of all the attributes for the centroid
-		MPI_Allreduce(centroids[i].toArray(), centroidAttributeSums, song::NUM_FEATURES, MPI_DOUBLE, MPI_SUM, MCW);
+		MPI_Allreduce(centroids[i].toArray(), centroidAttributeSums, song::NUM_FEATURES, MPI_FLOAT, MPI_SUM, MCW);
 		int centroidSum;
 		MPI_Allreduce(&centroidCounts[i], &centroidSum, 1, MPI_INT, MPI_SUM, MCW);
 		// Compute the average of the attributes for the centroid

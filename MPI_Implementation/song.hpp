@@ -10,15 +10,15 @@
 class song
 {
 public:
-	double danceability;
-	double energy;
-	double loudness;
-	double speechiness;
-	double acousticness;
-	double instrumental;
-	double liveness;
-	double valence;
-	double tempo;
+	float danceability;
+	float energy;
+	float loudness;
+	float speechiness;
+	float acousticness;
+	float instrumental;
+	float liveness;
+	float valence;
+	float tempo;
 
 	static const int NUM_FEATURES = 9;
 
@@ -34,23 +34,23 @@ public:
 		reset();
 	}
 
-	song(double defaultNum);
+	song(float defaultNum);
 
 	song(std::vector<std::string>);
-	song(double[]);
+	song(float*);
 	// randomly assign all of the variables a random number
 
-	double distance(song);
+	float distance(song);
 	void min(song);
 	void max(song);
 	void standardize(song, song);
 	std::string toString();
-	double* toArray();
+	float* toArray();
 	bool operator<(const song& s) const;
 	bool operator==(const song& s) const;
 };
 
-song::song(double defaultNum)
+song::song(float defaultNum)
 {
 	danceability = energy = loudness = speechiness = acousticness = instrumental = liveness = valence = tempo = defaultNum;
 }
@@ -69,7 +69,8 @@ song::song(std::vector<std::string> data) :
 {
 }
 
-song::song(double* data) :
+// Constructor for when the object needs to be reconstructed after an MPI call
+song::song(float* data) :
 		danceability(data[0]),
 		energy(data[1]),
 		loudness(data[2]),
@@ -87,9 +88,9 @@ song::song(double* data) :
  *
  * @param the other song to compare distances with
  */
-double song::distance(song s)
+float song::distance(song s)
 {
-	double total = 0;
+	float total = 0;
 	total += (danceability - s.danceability) * (danceability - s.danceability);
 	total += (energy - s.energy) * (energy - s.energy);
 	total += (loudness - s.loudness) * (loudness - s.loudness);
@@ -164,9 +165,9 @@ std::string song::toString()
 	return s.str();
 }
 
-double* song::toArray()
+float* song::toArray()
 {
-	double* arr = (double*)malloc(sizeof(double) * NUM_FEATURES);
+	float* arr = (float*)malloc(sizeof(float) * NUM_FEATURES);
 	arr[0] = danceability;
 	arr[1] = energy;
 	arr[2] = loudness;
