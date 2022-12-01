@@ -2,7 +2,7 @@ a.out
 build/*
 knn
 results.csv
-/out
-/.vs
 OpenMPResults.csv
 serialResults.csv
+/out
+/.vs
