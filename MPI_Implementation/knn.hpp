@@ -1,6 +1,6 @@
 #pragma once
 #include "utils.hpp"
-
+#include <cmath>
 #include <unordered_map>
 #define ROUNDS 20
 
@@ -35,6 +35,23 @@ std::vector<song> generateCentroids(int count, std::vector<song> s)
 	return centroids;
 }
 
+
+void updateCentroidWithoutAverage(song& centroid, std::vector<song> songs)
+{
+	centroid.reset();
+	for (int i = 0; i < songs.size(); i++)
+	{
+		centroid.danceability += songs[i].danceability;
+		centroid.energy += songs[i].energy;
+		centroid.loudness += songs[i].loudness;
+		centroid.speechiness += songs[i].speechiness;
+		centroid.acousticness += songs[i].acousticness;
+		centroid.instrumental += songs[i].instrumental;
+		centroid.liveness += songs[i].liveness;
+		centroid.valence += songs[i].valence;
+		centroid.tempo += songs[i].tempo;
+	}
+}
 /*
  * @brief updates the centroid to be the center of all of it's songs
  *
@@ -55,15 +72,61 @@ void updateCentroid(song& centroid, std::vector<song> songs)
 		centroid.instrumental += songs[i].instrumental;
 		centroid.liveness += songs[i].liveness;
 		centroid.valence += songs[i].valence;
+		centroid.tempo += songs[i].tempo;
 	}
-	centroid.danceability /= songs.size();
-	centroid.energy /= songs.size();
-	centroid.loudness /= songs.size();
-	centroid.speechiness /= songs.size();
-	centroid.acousticness /= songs.size();
-	centroid.instrumental /= songs.size();
-	centroid.liveness /= songs.size();
-	centroid.valence /= songs.size();
+	if(songs.size() != 0){
+		centroid.danceability /= songs.size();
+		centroid.energy /= songs.size();
+		centroid.loudness /= songs.size();
+		centroid.speechiness /= songs.size();
+		centroid.acousticness /= songs.size();
+		centroid.instrumental /= songs.size();
+		centroid.liveness /= songs.size();
+		centroid.valence /= songs.size();
+		centroid.tempo /= songs.size();
+
+	}
+	centroid.danceability = ceil(centroid.danceability * 1000000.0) / 1000000.0;
+	centroid.energy = ceil(centroid.energy * 1000000.0) / 1000000.0;
+	centroid.loudness = ceil(centroid.loudness * 1000000.0) / 1000000.0;
+	centroid.speechiness = ceil(centroid.speechiness * 1000000.0) / 1000000.0;
+	centroid.acousticness = ceil(centroid.acousticness * 1000000.0) / 1000000.0;
+	centroid.instrumental = ceil(centroid.instrumental * 1000000.0) / 1000000.0;
+	centroid.liveness = ceil(centroid.liveness * 1000000.0) / 1000000.0;
+	centroid.valence = ceil(centroid.valence * 1000000.0) / 1000000.0;
+	centroid.tempo = ceil(centroid.tempo * 1000000.0) / 1000000.0;
+
+	// centroid.danceability = ceil(centroid.danceability * 1000.0) / 1000.0;
+	// centroid.energy = ceil(centroid.energy * 1000.0) / 1000.0;
+	// centroid.loudness = ceil(centroid.loudness * 1000.0) / 1000.0;
+	// centroid.speechiness = ceil(centroid.speechiness * 1000.0) / 1000.0;
+	// centroid.acousticness = ceil(centroid.acousticness * 1000.0) / 1000.0;
+	// centroid.instrumental = ceil(centroid.instrumental * 1000.0) / 1000.0;
+	// centroid.liveness = ceil(centroid.liveness * 1000.0) / 1000.0;
+	// centroid.valence = ceil(centroid.valence * 1000.0) / 1000.0;
+	// centroid.tempo = ceil(centroid.tempo * 1000.0) / 1000.0;
+	
+	// centroid.danceability = ceil(centroid.danceability * 100000.0) / 100000.0;
+	// centroid.energy = ceil(centroid.energy * 100000.0) / 100000.0;
+	// centroid.loudness = ceil(centroid.loudness * 100000.0) / 100000.0;
+	// centroid.speechiness = ceil(centroid.speechiness * 100000.0) / 100000.0;
+	// centroid.acousticness = ceil(centroid.acousticness * 100000.0) / 100000.0;
+	// centroid.instrumental = ceil(centroid.instrumental * 100000.0) / 100000.0;
+	// centroid.liveness = ceil(centroid.liveness * 100000.0) / 100000.0;
+	// centroid.valence = ceil(centroid.valence * 100000.0) / 100000.0;
+	// centroid.tempo = ceil(centroid.tempo * 100000.0) / 100000.0;
+
+	
+
+	// centroid.danceability = ceil(centroid.danceability * 10000.0) / 10000.0;
+	// centroid.energy = ceil(centroid.energy * 10000.0) / 10000.0;
+	// centroid.loudness = ceil(centroid.loudness * 10000.0) / 10000.0;
+	// centroid.speechiness = ceil(centroid.speechiness * 10000.0) / 10000.0;
+	// centroid.acousticness = ceil(centroid.acousticness * 10000.0) / 10000.0;
+	// centroid.instrumental = ceil(centroid.instrumental * 10000.0) / 10000.0;
+	// centroid.liveness = ceil(centroid.liveness * 10000.0) / 10000.0;
+	// centroid.valence = ceil(centroid.valence * 10000.0) / 10000.0;
+	// centroid.tempo = ceil(centroid.tempo * 10000.0) / 10000.0;
 }
 
 /*
@@ -76,7 +139,7 @@ void updateCentroid(song& centroid, std::vector<song> songs)
  */
 int findClosestCentroid(song s, std::vector<song> centroids)
 {
-	float distance, minDistance = std::numeric_limits<float>::max();
+	double distance, minDistance = std::numeric_limits<double>::max();
 	int troid;
 	for (int i = 0; i < centroids.size(); i++)
 	{
@@ -109,15 +172,17 @@ std::vector<song> computeAverageCentroids(std::vector<song> allCentroids, int* c
 			newCentroid.tempo += allCentroids[j].tempo * centroidCounts[j];
 		}
 		std::cout << "Total danceablity: " << newCentroid.danceability << " divided by "<< totalSongsNearThisCentroid <<std::endl;
-		newCentroid.danceability /= totalSongsNearThisCentroid;
-		newCentroid.energy /= totalSongsNearThisCentroid;
-		newCentroid.loudness /= totalSongsNearThisCentroid;
-		newCentroid.speechiness /= totalSongsNearThisCentroid;
-		newCentroid.acousticness /= totalSongsNearThisCentroid;
-		newCentroid.instrumental /= totalSongsNearThisCentroid;
-		newCentroid.liveness /= totalSongsNearThisCentroid;
-		newCentroid.valence /= totalSongsNearThisCentroid;
-		newCentroid.tempo /= totalSongsNearThisCentroid;
+		if(totalSongsNearThisCentroid != 0){
+			newCentroid.danceability /= totalSongsNearThisCentroid;
+			newCentroid.energy /= totalSongsNearThisCentroid;
+			newCentroid.loudness /= totalSongsNearThisCentroid;
+			newCentroid.speechiness /= totalSongsNearThisCentroid;
+			newCentroid.acousticness /= totalSongsNearThisCentroid;
+			newCentroid.instrumental /= totalSongsNearThisCentroid;
+			newCentroid.liveness /= totalSongsNearThisCentroid;
+			newCentroid.valence /= totalSongsNearThisCentroid;
+			newCentroid.tempo /= totalSongsNearThisCentroid;
+		}
 		averageCentroids.push_back(newCentroid);
 	}
 	return averageCentroids;
@@ -125,7 +190,7 @@ std::vector<song> computeAverageCentroids(std::vector<song> allCentroids, int* c
 
 
 
-void recreateSongs(std::vector<song> &songs, float* songNumbers, int songCount){
+void recreateSongs(std::vector<song> &songs, double* songNumbers, int songCount){
 	// Create the songs from the song data
 	for(int i = 0; i < songCount; i++){
 		song s;
@@ -153,9 +218,9 @@ void createCountsAndDisplacements(std::vector<int>& counts, std::vector<int>& di
 }
 
 // Create the song data array to send to the processes 
-void createSongDataArray(std::vector<float>& songData, std::vector<song> songs){
+void createSongDataArray(std::vector<double>& songData, std::vector<song> songs){
 	for(int i = 0; i < songs.size(); i++){
-		float* temp = songs[i].toArray();
+		double* temp = songs[i].toArray();
 		for(int j = 0; j < song::NUM_FEATURES; j++){
 			songData.push_back(temp[j]);
 		}
@@ -164,40 +229,40 @@ void createSongDataArray(std::vector<float>& songData, std::vector<song> songs){
 
 // Send the centroids to the processes
 void distributeCentroids(std::vector<song>& centroids, int rank, int totalProcesses){
-	std::vector<float> centroidData;
+	std::vector<double> centroidData;
 	int centroidCount = centroids.size();
 	MPI_Bcast(&centroidCount, 1, MPI_INT, 0, MCW);
-	float* centroidNumbers;
+	double* centroidNumbers;
 	if(rank == 0) {
 		createSongDataArray(centroidData, centroids);
 		centroidNumbers = centroidData.data();
 	}
 	else{
-		centroidNumbers = (float*)malloc(sizeof(float) * centroidCount * song::NUM_FEATURES);
+		centroidNumbers = (double*)malloc(sizeof(double) * centroidCount * song::NUM_FEATURES);
 	}
 
-	MPI_Bcast(centroidNumbers, centroidCount * song::NUM_FEATURES, MPI_FLOAT, 0, MCW);
+	MPI_Bcast(centroidNumbers, centroidCount * song::NUM_FEATURES, MPI_DOUBLE, 0, MCW);
 	if(rank != 0) recreateSongs(centroids, centroidNumbers, centroidCount);
 	// std::cout << "Process " << rank << " has " << centroids.size() << " centroids" << std::endl;
 }
 
-float* distributeData(std::vector<song>& songs, int rank, int totalProcesses)
+double* distributeData(std::vector<song>& songs, int rank, int totalProcesses)
 {
-	std::vector<float> songData;
+	std::vector<double> songData;
 	int songCount = songs.size() / totalProcesses;
 	MPI_Bcast(&songCount, 1, MPI_INT, 0, MCW);
-	float* songNumbers = (float*)malloc(sizeof(float) * songCount * song::NUM_FEATURES);
+	double* songNumbers = (double*)malloc(sizeof(double) * songCount * song::NUM_FEATURES);
 	if (rank == 0)
 	{
 		std::vector<int> counts;
 		std::vector<int> displacements;
 		createCountsAndDisplacements(counts, displacements, songCount, totalProcesses);
 		createSongDataArray(songData, songs);
-		MPI_Scatterv(songData.data(), counts.data(), displacements.data(), MPI_FLOAT, songNumbers, songCount * song::NUM_FEATURES, MPI_FLOAT, 0, MCW);
+		MPI_Scatterv(songData.data(), counts.data(), displacements.data(), MPI_DOUBLE, songNumbers, songCount * song::NUM_FEATURES, MPI_DOUBLE, 0, MCW);
 	}
 	else
 	{
-		MPI_Scatterv(NULL, NULL, NULL, MPI_FLOAT, songNumbers, songCount * song::NUM_FEATURES, MPI_FLOAT, 0, MCW);
+		MPI_Scatterv(NULL, NULL, NULL, MPI_DOUBLE, songNumbers, songCount * song::NUM_FEATURES, MPI_DOUBLE, 0, MCW);
 	}
 	
 	// Account for the remaining songs that weren't sent out
@@ -218,10 +283,10 @@ float* distributeData(std::vector<song>& songs, int rank, int totalProcesses)
 std::vector<song> averageCentroids(std::vector<song> centroids, std::vector<int> centroidCounts, int numCentroids, int rank, int size){
 	std::vector<int> counts;
 	std::vector<int> displacements;
-	float* centroidData = new float[numCentroids * song::NUM_FEATURES * size];
+	double* centroidData = new double[numCentroids * song::NUM_FEATURES * size];
 	int* centroidCountsData = new int[numCentroids * size];
 	createCountsAndDisplacements(counts, displacements, numCentroids, size);
-	MPI_Gatherv(centroids.data(), numCentroids * song::NUM_FEATURES, MPI_FLOAT, centroidData, counts.data(), displacements.data(), MPI_FLOAT, 0, MCW);
+	MPI_Gatherv(centroids.data(), numCentroids * song::NUM_FEATURES, MPI_DOUBLE, centroidData, counts.data(), displacements.data(), MPI_DOUBLE, 0, MCW);
 	MPI_Gather(centroidCounts.data(), numCentroids, MPI_INT, centroidCountsData, numCentroids, MPI_INT, 0, MCW);
 	std::vector<song> averagedCentroids;
 	if(rank == 0){
@@ -256,11 +321,11 @@ void gatherClusteredSongs(std::vector<song>* songs, int centroidCount, int total
 			}
 			// std::cout << "Total songs for centroid " << i << " is " << totalSongsForThisCentroid << " with offset " << offset << std::endl;
 		}
-		std::vector<float> songData;
+		std::vector<double> songData;
 		createSongDataArray(songData, songs[i]);
-		float* songNumbers = new float[offset];
+		double* songNumbers = new double[offset];
 		// std::cout << "Rank " << rank << " has " << songs[i].size() << " songs for centroid " << i << std::endl;
-		MPI_Gatherv(songData.data(), songs[i].size() * song::NUM_FEATURES, MPI_FLOAT, songNumbers, counts.data(), displacements.data(), MPI_FLOAT, 0, MCW);
+		MPI_Gatherv(songData.data(), songs[i].size() * song::NUM_FEATURES, MPI_DOUBLE, songNumbers, counts.data(), displacements.data(), MPI_DOUBLE, 0, MCW);
 		counts.clear();
 		displacements.clear();
 		if(rank == 0){

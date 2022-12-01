@@ -10,15 +10,15 @@
 class song
 {
 public:
-	float danceability;
-	float energy;
-	float loudness;
-	float speechiness;
-	float acousticness;
-	float instrumental;
-	float liveness;
-	float valence;
-	float tempo;
+	double danceability;
+	double energy;
+	double loudness;
+	double speechiness;
+	double acousticness;
+	double instrumental;
+	double liveness;
+	double valence;
+	double tempo;
 
 	static const int NUM_FEATURES = 9;
 
@@ -34,23 +34,23 @@ public:
 		reset();
 	}
 
-	song(float defaultNum);
+	song(double defaultNum);
 
 	song(std::vector<std::string>);
-	song(float[]);
+	song(double[]);
 	// randomly assign all of the variables a random number
 
-	float distance(song);
+	double distance(song);
 	void min(song);
 	void max(song);
 	void standardize(song, song);
 	std::string toString();
-	float* toArray();
+	double* toArray();
 	bool operator<(const song& s) const;
 	bool operator==(const song& s) const;
 };
 
-song::song(float defaultNum)
+song::song(double defaultNum)
 {
 	danceability = energy = loudness = speechiness = acousticness = instrumental = liveness = valence = tempo = defaultNum;
 }
@@ -69,7 +69,7 @@ song::song(std::vector<std::string> data) :
 {
 }
 
-song::song(float* data) :
+song::song(double* data) :
 		danceability(data[0]),
 		energy(data[1]),
 		loudness(data[3]),
@@ -87,9 +87,9 @@ song::song(float* data) :
  *
  * @param the other song to compare distances with
  */
-float song::distance(song s)
+double song::distance(song s)
 {
-	float total = 0;
+	double total = 0;
 	total += (danceability - s.danceability) * (danceability - s.danceability);
 	total += (energy - s.energy) * (energy - s.energy);
 	total += (loudness - s.loudness) * (loudness - s.loudness);
@@ -164,9 +164,9 @@ std::string song::toString()
 	return s.str();
 }
 
-float* song::toArray()
+double* song::toArray()
 {
-	float* arr = (float*)malloc(sizeof(float) * NUM_FEATURES);
+	double* arr = (double*)malloc(sizeof(double) * NUM_FEATURES);
 	arr[0] = danceability;
 	arr[1] = energy;
 	arr[2] = loudness;

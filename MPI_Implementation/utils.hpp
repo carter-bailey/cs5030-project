@@ -44,8 +44,8 @@ std::vector<song> getCSV()
 	std::vector<std::string> data;
 
 	// initialize our min and max
-	song min(std::numeric_limits<float>::max());
-	song max(std::numeric_limits<float>::min());
+	song min(std::numeric_limits<double>::max());
+	song max(std::numeric_limits<double>::min());
 
 	std::string record;
 
