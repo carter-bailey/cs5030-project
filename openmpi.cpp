@@ -1,6 +1,6 @@
 #include <mpi.h>
 #define MCW MPI_COMM_WORLD
-#include "knn.hpp"
+#include "lib/openmpi.hpp"
 
 int main(int argc, char** argv)
 {

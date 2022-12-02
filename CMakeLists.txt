@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-set(HEADER_FILES lib/utils.hpp lib/kmeans.hpp lib/song.hpp lib/openmp.hpp)
+set(HEADER_FILES lib/utils.hpp lib/kmeans.hpp lib/song.hpp )
 
 set(OPENMP openmp)
 
@@ -13,20 +13,30 @@ set_property(TARGET ${OPENMP} PROPERTY CXX_STANDARD 20)
 set(SERIAL serial)
 
 project(${SERIAL})
-add_executable(${SERIAL} serial.cpp ${HEADER_FILES})
+add_executable(${SERIAL} serial.cpp ${HEADER_FILES} lib/openmp.hpp)
 set_property(TARGET ${SERIAL} PROPERTY CXX_STANDARD 20)
 
+set(MPI openmpi)
+project(${MPI})
+find_package(MPI REQUIRED)
+include_directories(${MPI_INCLUDE_PATH})
+add_executable(${MPI} openmpi.cpp ${HEADER_FILES} lib/openmpi.hpp)
+set_property(TARGET ${OPENMP} PROPERTY CXX_STANDARD 20)
+target_link_libraries(${OPENMP} PRIVATE MPI::MPI_CXX)
 
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   target_compile_options(${OPENMP} PRIVATE /W4 /permissive-)  
   target_compile_options(${SERIAL} PRIVATE /W4 /permissive-)  
+  target_compile_options(${MPI} PRIVATE /W4 /permissive-)  
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  target_compile_options(${OPENMP} PRIVATE -Wall -Wextra -pedantic -O3 -fopenmp)
-  target_compile_options(${SERIAL} PRIVATE -Wall -Wextra -pedantic -O3 -fopenmp)
+  target_compile_options(${OPENMP} PRIVATE -fopenmp)
+  target_compile_options(${SERIAL} PRIVATE)
+  target_compile_options(${MPI} PRIVATE -fopenmpi)
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "CLANG")
-  target_compile_options(${OPENMP} PRIVATE -Wall -Wextra -pedantic -O3 -fopenmp)
-  target_compile_options(${SERIAL} PRIVATE -Wall -Wextra -pedantic -O3 -fopenmp)
+  target_compile_options(${OPENMP} PRIVATE -fopenmp)
+  target_compile_options(${SERIAL} PRIVATE)
+  target_compile_options(${MPI} PRIVATE  -fopenmpi)
 endif()
 
 find_program(CLANG_FORMAT "clang-format")
