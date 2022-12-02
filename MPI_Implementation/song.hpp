@@ -6,6 +6,8 @@
 #include <random>
 #include <sstream>
 #include <vector>
+#include <iomanip>
+
 
 class song
 {
@@ -160,8 +162,8 @@ void song::standardize(song min, song max)
 
 std::string song::toString()
 {
-	std::stringstream s;
-	s << danceability << "," << energy << "," << loudness << "," << speechiness << "," << acousticness << "," << instrumental << "," << liveness << "," << valence << "," << tempo << "\n";
+	std::stringstream s("");
+	s << std::setprecision(5) << danceability << "," << std::setprecision(5) << energy << "," << std::setprecision(5) << loudness << "," << std::setprecision(5) << speechiness << "," << std::setprecision(5) << acousticness << "," << std::setprecision(5) << instrumental << "," << std::setprecision(5) << liveness << "," << std::setprecision(5) << valence << "," << std::setprecision(5) << tempo << "\n";
 	return s.str();
 }
 
