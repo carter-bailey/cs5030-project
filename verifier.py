@@ -1,9 +1,10 @@
 import pandas as pd
 
 def verifier(original, new):
-    original.sort_values(["centroid", "danceability", "energy", "tempo", "liveness", "instrumental", "valence"],axis = 0, ascending = True,inplace = True)
+centroid,danceability,energy,loudness,speechiness,    acousticness,instrumental,liveness,valence,tempo
+    original.sort_values(["centroid", "danceability", "energy", "loudness", "speechiness", "acousticness", "instrumental", "liveness",  "valence", "tempo"],axis = 0, ascending = True,inplace = True)
     original.reset_index(drop=True,inplace=True)
-    new.sort_values(["centroid", "danceability", "energy", "tempo", "liveness", "instrumental", "valence"],axis = 0, ascending = True,inplace = True)
+    new.sort_values([["centroid", "danceability", "energy", "loudness", "speechiness", "acousticness", "instrumental", "liveness",  "valence", "tempo"]],axis = 0, ascending = True,inplace = True)
     new.reset_index(drop=True,inplace=True)
     return original.equals(new)
 
