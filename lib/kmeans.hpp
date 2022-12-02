@@ -55,6 +55,7 @@ void updateCentroid(song& centroid, std::vector<song> songs)
 		centroid.instrumental += songs[i].instrumental;
 		centroid.liveness += songs[i].liveness;
 		centroid.valence += songs[i].valence;
+		centroid.tempo += songs[i].tempo;
 	}
 	centroid.danceability /= songs.size();
 	centroid.energy /= songs.size();
@@ -64,6 +65,7 @@ void updateCentroid(song& centroid, std::vector<song> songs)
 	centroid.instrumental /= songs.size();
 	centroid.liveness /= songs.size();
 	centroid.valence /= songs.size();
+	centroid.tempo /= songs.size();
 }
 
 /*
