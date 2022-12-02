@@ -2,7 +2,9 @@ import pandas as pd
 
 def verifier(original, new):
     original.sort_values(["centroid", "energy"],axis = 0, ascending = True,inplace = True)
+    original.reset_index(drop=True,inplace=True)
     new.sort_values(["centroid", "energy"],axis = 0, ascending = True,inplace = True)
+    new.reset_index(drop=True,inplace=True)
     return original.equals(new)
 
 serial = pd.read_csv("serialResults.csv")
