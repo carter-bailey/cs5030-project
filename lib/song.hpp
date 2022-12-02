@@ -20,10 +20,12 @@ public:
 	float valence;
 	float tempo;
 
+	static const int NUM_FEATURES = 9;
+
 	// resets the objects data to 0 so that we can recenter a centroid in the middle of it's data
 	void reset()
 	{
-		speechiness = acousticness = instrumental = liveness = valence = loudness = energy = danceability = 0;
+		speechiness = acousticness = instrumental = liveness = valence = loudness = energy = danceability = tempo = 0;
 	}
 
 	// base constructor sets everything to zero
@@ -35,6 +37,7 @@ public:
 	song(float defaultNum);
 
 	song(std::vector<std::string>);
+	song(float*);
 	// randomly assign all of the variables a random number
 
 	float distance(song);
@@ -42,6 +45,7 @@ public:
 	void max(song);
 	void standardize(song, song);
 	std::string toString();
+	float* toArray();
 	bool operator<(const song& s) const;
 	bool operator==(const song& s) const;
 };
@@ -62,6 +66,20 @@ song::song(std::vector<std::string> data) :
 		liveness(std::stof(data[8])),
 		valence(std::stof(data[9])),
 		tempo(std::stof(data[10]))
+{
+}
+
+// Constructor for when the object needs to be reconstructed after an MPI call
+song::song(float* data) :
+		danceability(data[0]),
+		energy(data[1]),
+		loudness(data[2]),
+		speechiness(data[3]),
+		acousticness(data[4]),
+		instrumental(data[5]),
+		liveness(data[6]),
+		valence(data[7]),
+		tempo(data[8])
 {
 }
 
@@ -145,6 +163,21 @@ std::string song::toString()
 	std::stringstream s;
 	s << danceability << "," << energy << "," << loudness << "," << speechiness << "," << acousticness << "," << instrumental << "," << liveness << "," << valence << "," << tempo << "\n";
 	return s.str();
+}
+
+float* song::toArray()
+{
+	float* arr = (float*)malloc(sizeof(float) * NUM_FEATURES);
+	arr[0] = danceability;
+	arr[1] = energy;
+	arr[2] = loudness;
+	arr[3] = speechiness;
+	arr[4] = acousticness;
+	arr[5] = instrumental;
+	arr[6] = liveness;
+	arr[7] = valence;
+	arr[8] = tempo;
+	return arr;
 }
 
 // These two operator overloads are required so that that the hashmap works
