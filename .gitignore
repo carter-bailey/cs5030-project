@@ -3,6 +3,7 @@ build/*
 knn
 results.csv
 OpenMPResults.csv
+cudaResults.csv
 serialResults.csv
 /out
 /.vs
