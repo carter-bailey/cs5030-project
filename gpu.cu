@@ -7,16 +7,16 @@
 // This the the amount of songs in the data
 #define N 42305
 // This is the size of the centroids so the amount of k
-#define K 12
+#define K 4
 #define ROUNDS 20
 
-__global__ void findClosestCentroid(song *data, int *cluster_assignment, song *centroids)
+__global__ void findClosestCentroid(song *data, int *cluster_assignment, song *centroids, int numSongs)
 {
     // Get id for datapoint to be updated
     const int id = blockIdx.x * blockDim.x + threadIdx.x;
 
     // Check the bounds
-    if (id >= N)
+    if (id >= numSongs)
         return;
 
     // Find the closest centroid to the datapoint
@@ -67,27 +67,28 @@ __global__ void resetCentroids(song *centroids){
     centroids[id].tempo = 0;
 }
 
-__global__ void sumCentroids(song *data, int *cluster_assignment, song *centroids, int *cluster_sizes){
+__global__ void sumCentroids(song *data, int *cluster_assignment, song *centroids, int *cluster_sizes, int numSongs){
 
     // get the id
     const int id = blockIdx.x * blockDim.x + threadIdx.x;
     // check bounds
-    if (id >= N){return;}
+    if (id >= numSongs){return;}
             
-            int cluster_id = cluster_assignment[id];
+    int cluster_id = cluster_assignment[id];
 
-            // Sum the centroids variables up
-            atomicAdd(&centroids[cluster_id].danceability, data[id].danceability);
-            atomicAdd(&centroids[cluster_id].energy, data[id].energy);
-            atomicAdd(&centroids[cluster_id].loudness, data[id].loudness);
-            atomicAdd(&centroids[cluster_id].speechiness, data[id].speechiness);
-            atomicAdd(&centroids[cluster_id].acousticness, data[id].acousticness);
-            atomicAdd(&centroids[cluster_id].instrumental, data[id].instrumental);
-            atomicAdd(&centroids[cluster_id].liveness, data[id].liveness);
-            atomicAdd(&centroids[cluster_id].valence, data[id].valence);
-            atomicAdd(&centroids[cluster_id].tempo, data[id].tempo);
-            atomicAdd(&cluster_sizes[cluster_id], 1);
+    // Sum the centroids variables up
+    atomicAdd(&centroids[cluster_id].danceability, data[id].danceability);
+    atomicAdd(&centroids[cluster_id].energy, data[id].energy);
+    atomicAdd(&centroids[cluster_id].loudness, data[id].loudness);
+    atomicAdd(&centroids[cluster_id].speechiness, data[id].speechiness);
+    atomicAdd(&centroids[cluster_id].acousticness, data[id].acousticness);
+    atomicAdd(&centroids[cluster_id].instrumental, data[id].instrumental);
+    atomicAdd(&centroids[cluster_id].liveness, data[id].liveness);
+    atomicAdd(&centroids[cluster_id].valence, data[id].valence);
+    atomicAdd(&centroids[cluster_id].tempo, data[id].tempo);
+    atomicAdd(&cluster_sizes[cluster_id], 1);
 } 
+
 __global__ void updateCentroids(song *data, int *cluster_assignment, song *centroids, int *cluster_sizes)
 {
     // get the id
@@ -109,49 +110,52 @@ __global__ void updateCentroids(song *data, int *cluster_assignment, song *centr
 }
 
 // int main()
-void launcher(song *centroids_h, song *data_h, int *cluster_assignment_h)
+void launcher(song *centroids_h, song *data_h, int *cluster_assignment_h, int numSongs)
 {
     song *data_d;
     int *cluster_assignment_d;
     song *centroids_d;
     int *cluster_sizes_h = (int *)malloc(K * sizeof(int));
     int *cluster_sizes_d;
-    dim3 block(std::ceil(N/64),1,1);
+    int *numSongs_d;
+    dim3 block(std::ceil(numSongs/64),1,1);
     dim3 grid(64,1,1);
 
-    cudaMalloc(&data_d, N * sizeof(song));
-    cudaMalloc(&cluster_assignment_d, N * sizeof(int));
+    cudaMalloc(&data_d, numSongs * sizeof(song));
+    cudaMalloc(&cluster_assignment_d, numSongs * sizeof(int));
     cudaMalloc(&centroids_d, K * sizeof(song));
     cudaMalloc(&cluster_sizes_d, K * sizeof(int));
+    cudaMalloc(&numSongs_d, sizeof(int));
 
-
-    cudaMemset(cluster_assignment_d, 0, N * sizeof(int));
+    cudaMemset(cluster_assignment_d, 0, numSongs * sizeof(int));
     cudaMemset(cluster_sizes_d, 0, K * sizeof(int));
 
+    cudaMemcpy(numSongs_d, &numSongs, sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(centroids_d, centroids_h, K * sizeof(song), cudaMemcpyHostToDevice);
-    cudaMemcpy(data_d, data_h, N * sizeof(song), cudaMemcpyHostToDevice);
+    cudaMemcpy(data_d, data_h, numSongs * sizeof(song), cudaMemcpyHostToDevice);
 
 
     for(int i = 0; i < ROUNDS; i++)
     {
-        findClosestCentroid<<<block, grid>>>(data_d, cluster_assignment_d, centroids_d);
+        findClosestCentroid<<<block, grid>>>(data_d, cluster_assignment_d, centroids_d, numSongs);
         resetCentroids<<<block, grid>>>(centroids_d);
         cudaDeviceSynchronize();
         cudaMemset(cluster_sizes_d, 0, K * sizeof(int));
-        sumCentroids<<<block, grid>>>(data_d, cluster_assignment_d, centroids_d, cluster_sizes_d);
+        sumCentroids<<<block, grid>>>(data_d, cluster_assignment_d, centroids_d, cluster_sizes_d, numSongs);
         cudaDeviceSynchronize();
         updateCentroids<<<block, grid>>>(data_d, cluster_assignment_d, centroids_d, cluster_sizes_d);
         cudaDeviceSynchronize();
 
         // for debugging purposes
         cudaMemcpy(centroids_h, centroids_d, K * sizeof(song), cudaMemcpyDeviceToHost);
-        for (int j = 0; j < K; ++j)
-          {printf("Iteration %d: centroid %d: %f\n",i,j,centroids_h[j].danceability);}
+        for (int j = 0; j < K; ++j){
+            printf("Iteration %d: centroid %d: %f\n",i,j,centroids_h[j].danceability);
+        }
     }
 
     // copy our final results over
-    cudaMemcpy(data_h, data_d, N * sizeof(song), cudaMemcpyDeviceToHost);
-    cudaMemcpy(cluster_assignment_h, cluster_assignment_d, N * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(data_h, data_d, numSongs * sizeof(song), cudaMemcpyDeviceToHost);
+    cudaMemcpy(cluster_assignment_h, cluster_assignment_d, numSongs * sizeof(int), cudaMemcpyDeviceToHost);
 
     // free all of our memory
     cudaFree(data_d);
@@ -163,22 +167,21 @@ void launcher(song *centroids_h, song *data_h, int *cluster_assignment_h)
 
 int main()
 {
-    int cluster_assignment_h[N * sizeof(int)];
-
-
     auto data = getCSV();
     auto centroids = generateCentroids(K, data);
+    int numSongs = data.size();
+
+    int cluster_assignment_h[numSongs * sizeof(int)];
 
     song *data_h = &data[0];
     song *centroids_h = &centroids[0];
 
-    launcher(centroids_h, data_h, cluster_assignment_h);
+    launcher(centroids_h, data_h, cluster_assignment_h, numSongs);
 
 
     std::ofstream output_file("cudaResults.csv");
-    output_file << "centroid,danceability,energy,loudness,speechiness,\
-    acousticness,instrumental,liveness,valence,tempo\n";
-    for (long unsigned int i = 0; i < N; ++i)
+    output_file << "centroid,danceability,energy,loudness,speechiness,acousticness,instrumental,liveness,valence,tempo\n";
+    for (long unsigned int i = 0; i < numSongs; ++i)
     {
         output_file << cluster_assignment_h[i] << "," << data_h[i].toString();
     }
