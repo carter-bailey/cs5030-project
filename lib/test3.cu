@@ -17,6 +17,7 @@
 #include <random>
 #include <sstream>
 #include <vector>
+#include <cmath>
 #define DELIMITER ','
 
 // #include "utils.hpp"
@@ -79,6 +80,19 @@ __global__ void updateCentroids(song *data_d, int *cluster_assignment_d, song *c
             
             int cluster_id = cluster_assignment_d[id];
 
+            centroids_d[cluster_id].danceability = 0;
+            centroids_d[cluster_id].energy =0;
+            centroids_d[cluster_id].loudness = 0;
+            centroids_d[cluster_id].speechiness = 0;
+            centroids_d[cluster_id].acousticness = 0;
+            centroids_d[cluster_id].instrumental = 0;
+            centroids_d[cluster_id].liveness = 0;
+            centroids_d[cluster_id].valence = 0;
+            centroids_d[cluster_id].tempo = 0;
+            cluster_sizes_d[cluster_id] = 0;
+
+            __syncthreads();
+
             atomicAdd(&centroids_d[cluster_id].danceability, data_d[id].danceability);
             atomicAdd(&centroids_d[cluster_id].energy, data_d[id].energy);
             atomicAdd(&centroids_d[cluster_id].loudness, data_d[id].loudness);
@@ -96,7 +110,12 @@ __global__ void updateCentroids(song *data_d, int *cluster_assignment_d, song *c
     {
         for (int f = 0; f < K; ++f)
         {
-            // divide sums by the size
+            if (cluster_sizes_d[f] == 0)
+            {
+                printf("\nmade it here %d \n", f);
+            }else
+            {
+                   // divide sums by the size
         centroids_d[f].danceability /= cluster_sizes_d[f];
         centroids_d[f].energy /= cluster_sizes_d[f];
         centroids_d[f].loudness /= cluster_sizes_d[f];
@@ -106,6 +125,12 @@ __global__ void updateCentroids(song *data_d, int *cluster_assignment_d, song *c
         centroids_d[f].liveness /= cluster_sizes_d[f];
         centroids_d[f].valence /= cluster_sizes_d[f];
         centroids_d[f].tempo /= cluster_sizes_d[f];
+
+            }
+
+
+
+         
 
         }
 
@@ -136,7 +161,7 @@ void launcher(song *centroids_h, song *data_h, int *cluster_assignment_h)
 
     while (current_iteration < ROUNDS)
     {
-        findClosestAndUpdateCentroids<<<32,32>>>(data_d, cluster_assignment_d, centroids_d);
+        findClosestAndUpdateCentroids<<<std::ceil(N/256.0), 256>>>(data_d, cluster_assignment_d, centroids_d);
 
         cudaMemcpy(centroids_h, centroids_d, K * sizeof(song), cudaMemcpyDeviceToHost);
 
@@ -145,10 +170,10 @@ void launcher(song *centroids_h, song *data_h, int *cluster_assignment_h)
             printf("Iteration %d: centroid %d: %f\n",current_iteration,i,centroids_h[i].danceability);
         }
 
-        cudaMemset(centroids_d, 0.0, K * sizeof(song));
-        cudaMemset(cluster_sizes_d, 0, K * sizeof(int));
+        // cudaMemset(centroids_d, 0.0, K * sizeof(song));
+        // cudaMemset(cluster_sizes_d, 0, K * sizeof(int));
 
-        updateCentroids<<<32,32>>>(data_d, cluster_assignment_d, centroids_d, cluster_sizes_d);
+        updateCentroids<<<std::ceil(N/256.0), 256>>>(data_d, cluster_assignment_d, centroids_d, cluster_sizes_d);
 
 
         cudaMemcpy(data_h, data_d, N * sizeof(song), cudaMemcpyDeviceToHost);
