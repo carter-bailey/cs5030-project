@@ -69,3 +69,11 @@ Run: `./main`
 ### **Distributed GPU**
 
 
+## Verification
+
+To verify that the various versions are creating the same centroids run verifier.py. This script checks to make sure that the same amount of songs are assigned to each cluster, using the serial results as the baseline.
+
+This can be done by typing `python3 verifier.py` into the command line.
+
+Note that this file requires pandas which is not on the hpc clusters so you have to copy over the results.csv's onto your own computer to run verifier.py. 
+
