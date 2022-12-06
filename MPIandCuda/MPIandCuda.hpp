@@ -2,13 +2,13 @@
 #include "kmeans.hpp"
 #define BLOCKDIM 64
 
+void resetCentroidsExterior(float *centroids, int* K, int numSongs, int blockDim1);
+void findClosestCentroidExterior(float *data, int *cluster_assignment, float *centroids, int* numSongs, int* K, int blockDim1, int songsCount);
 void cudaMallocate(void **devPtr, size_t size);
 void cudaMemorySet(void *devPtr, int value, size_t count);
 void cudaMemoryCopy(void *dst, const void *src, size_t count, int kind);
-void findClosestCentroidExterior(float *data, int *cluster_assignment, float *centroids, int numSongs, int K, int blockDim1, int blockDim2, int blockDim3);
-void resetCentroidsExterior(float *centroids, int K, int numSongs, int blockDim1, int blockDim2, int blockDim3);
 void cudaDeviceSync();
-void sumCentroidsExterior(float *data, int *cluster_assignment, float *centroids, int *cluster_sizes, int numSongs, int blockDim1, int blockDim2, int blockDim3);
+void sumCentroidsExterior(float *data, int *cluster_assignment, float *centroids, int *cluster_sizes, int* numSongs, int blockDim1, int songCount);
 void updateCentroidsExterior(float *data, int *cluster_assignment, float *centroids, int *cluster_sizes, int K, int numSongs, int blockDim1, int blockDim2, int blockDim3);
 
 
@@ -32,7 +32,7 @@ void calculateAttributeSums(song& centroid, std::vector<song> songs)
 void recreateSongs(std::vector<song> &songs, float* songNumbers, int songCount){
 	// Create the songs from the song data
 	for(int i = 0; i < songCount; i++){
-		std::cout << "Song " << i << " worked " << std::endl;
+		//std::cout << "Song " << i << " worked " << std::endl;
 		song s;
 		s.danceability = songNumbers[i * song::NUM_FEATURES];
 		s.energy = songNumbers[i * song::NUM_FEATURES + 1];
@@ -168,7 +168,7 @@ std::vector<song> averageCentroids(std::vector<song> centroids, int* centroidCou
 		}
 		centroids[i] = song(centroidAttributeSums);
 	}
-	std::cout << "Performed averageCentroids" << std::endl;
+	//std::cout << "Performed averageCentroids" << std::endl;
 	return centroids;
 }
 
@@ -187,78 +187,83 @@ void MPI_KNN(std::vector<song> data, std:: vector<song> centroids, std::vector<s
 	int numSongs = distributeData(data, rank, size);
 	// Distribute the initial centroids to all processes
 	distributeCentroids(centroids, rank, size);
-	std::cout<< "I am rank " << rank << " and have " << numSongs << " songs" << std::endl;
+	//std::cout<< "I am rank " << rank << " and have " << numSongs << " songs" << std::endl;
 
-	for(int j = 0; j < K; j++){
-		std::cout << "centroid " << j << " is " << centroids[j].toString() << std::endl;
-	}
+	//for(int j = 0; j < K; j++){
+		//std::cout << "centroid " << j << " is " << centroids[j].toString() << std::endl;
+	//}
 
 	std::vector<float> songData;
-	createSongDataArray(songData, data);
-	float* data_h = songData.data(); 
-	float* data_d;
-    int *cluster_assignment_d;
 	std::vector<float> centroidData;
+	createSongDataArray(songData, data);
 	createSongDataArray(centroidData, centroids);
+
+  std::cout << "size of centroidData " << centroidData.size() << "\n";
+	float* data_h = songData.data(); 
 	float *centroids_h = centroidData.data();
-    float *centroids_d;
-    int *cluster_sizes_h = (int *)malloc(K * sizeof(int));
-    int *cluster_sizes_d;
-    int *numSongs_d;
+  std::cout << "size of centroids_h " << sizeof(centroids_h) << "\n";
+  int *cluster_sizes_h = new int[K]();
 
-    cudaMallocate((void**)&data_d, numSongs * sizeof(float) * song::NUM_FEATURES);
-    cudaMallocate((void**)&cluster_assignment_d, numSongs * sizeof(int));
-    cudaMallocate((void**)&centroids_d, K * sizeof(float) * song::NUM_FEATURES);
-    cudaMallocate((void**)&cluster_sizes_d, K * sizeof(int));
-    cudaMallocate((void**)&numSongs_d, sizeof(int));
+	float* data_d;
+  int *cluster_assignment_d;
+  float *centroids_d;
+  int *cluster_sizes_d;
+  int *numSongs_d, *K_d;
 
-    cudaMemorySet(cluster_assignment_d, 0, numSongs * sizeof(int));
-    cudaMemorySet(cluster_sizes_d, 0, K * sizeof(int));
+  cudaMallocate((void**)&data_d, numSongs * sizeof(float) * song::NUM_FEATURES);
+  cudaMallocate((void**)&cluster_assignment_d, numSongs * sizeof(int));
+  cudaMallocate((void**)&centroids_d, K * sizeof(float) * song::NUM_FEATURES);
+  cudaMallocate((void**)&cluster_sizes_d, K * sizeof(int));
+  cudaMallocate((void**)&numSongs_d, sizeof(int));
+  cudaMallocate((void**)&K_d, sizeof(int));
 
-    cudaMemoryCopy(numSongs_d, &numSongs, sizeof(int), 0);
-    cudaMemoryCopy(data_d, data_h, numSongs * sizeof(float) * song::NUM_FEATURES, 0);
+  cudaMemorySet(cluster_assignment_d, 0, numSongs * sizeof(int));
+  cudaMemorySet(cluster_sizes_d, 0, K * sizeof(int));
+
+  cudaMemoryCopy(numSongs_d, &numSongs, sizeof(int), 0);
+  cudaMemoryCopy(K_d, &K, sizeof(int), 0);
+  cudaMemoryCopy(data_d, data_h, numSongs * sizeof(float) * song::NUM_FEATURES, 0);
 
 
+		  for(int j = 0; j < K; j++){
+	  		std::cout << " initial centroid " << j << " is " << centroidData[j*9] << std::endl;
+	  	}
+  
 	std::vector<int> centroidCounts;
-    for(int i = 0; i < ROUNDS; i++)
-    {	
-	// 	for(int j = 0; j < K; j++){
-	// 		std::cout << "centroid " << j << " starts with " << centroids_h[j * 9] << std::endl;
-	// 	}
-    	cudaMemoryCopy(centroids_d, centroids_h, K * sizeof(song), 0);
-		std::cout << "Check " << 0 << std::endl;
-        findClosestCentroidExterior(data_d, cluster_assignment_d, centroids_d, numSongs, K, BLOCKDIM, 1, 1);
-        resetCentroidsExterior(centroids_d, K, numSongs, BLOCKDIM,1,1);
-        cudaDeviceSync();
-        cudaMemorySet(cluster_sizes_d, 0, K * sizeof(int));
-		std::cout << "Check " << 1 << std::endl;
-        sumCentroidsExterior(data_d, cluster_assignment_d, centroids_d, cluster_sizes_d, numSongs, BLOCKDIM, 1, 1);
-		std::cout << "Check " << 2 << std::endl;
-        cudaDeviceSync();
+	std::vector<float> newCentroidData;
+	std::vector<song> newCentroids;
+  for(int i = 0; i < ROUNDS; i++)
+  {	
+    std::cout << "before size " << sizeof(centroids_h) << "\n";
+		for(int j = 0; j < K; j++){
+			std::cout << "centroid " << j << " starts with " << cluster_sizes_h[j] << std::endl;
+		}
+   	cudaMemoryCopy(centroids_d, centroids_h, K * sizeof(float) * song::NUM_FEATURES, 0);
+    findClosestCentroidExterior(data_d, cluster_assignment_d, centroids_d, numSongs_d, K_d, BLOCKDIM, numSongs);
+    cudaDeviceSync();
+    resetCentroidsExterior(centroids_d, K_d, numSongs, BLOCKDIM);
+    cudaDeviceSync();
+    cudaMemorySet(cluster_sizes_d, 0, K * sizeof(int));
+    sumCentroidsExterior(data_d, cluster_assignment_d, centroids_d, cluster_sizes_d, numSongs_d, BLOCKDIM, numSongs);
+    cudaDeviceSync();
 		cudaMemoryCopy(data_h, data_d, numSongs * sizeof(float) * song::NUM_FEATURES, 1);
 		cudaMemoryCopy(centroids_h, centroids_d, K * sizeof(float) * song::NUM_FEATURES, 1);
 		cudaMemoryCopy(cluster_sizes_h, cluster_sizes_d, K * sizeof(int), 1);
-		for(int l = 0; l < K; l++){
-			std::cout << "Centroid " << l << " has " << cluster_sizes_h[l] << " songs" << std::endl;
-			// if(rank == 0){
-			// 	std::cout << "Centroid["<<l<<"][0] is " << centroids_h[l * song::NUM_FEATURES] << std::endl; 
-			// }
-		}
-		std::cout << "Check " << 4 << std::endl;
-		std::vector<song> newCentroids;
+    newCentroids.clear();
 		recreateSongs(newCentroids, centroids_h, K);
-		std::cout << "Check " << 5 << std::endl;
 		newCentroids = averageCentroids(newCentroids, cluster_sizes_h, K);
-		std::cout << "Check " << 6 << std::endl;
-		std::vector<float> newCentroidData;
+    newCentroidData.clear();
 		createSongDataArray(newCentroidData, newCentroids);
-		std::cout << "Check " << 7 << std::endl;
+
+    std::cout << "before going to array " << newCentroidData.size() << "\n";
 		centroids_h = newCentroidData.data();
-		if(rank == 0){
-			for(int j = 0; j < K; j++){
-				std::cout << "Centroid " << j << " is " << newCentroids[j].toString() << std::endl;
-			}
-		}
+    std::cout << "after size " << sizeof(centroids_h) << "\n";
+		//if(rank == 0){
+		//for(int j = 0; j < K; j++){
+       int j = 0;
+			//std::cout << "Centroid " << j << " is " << newCentroids[j].toString() << std::endl;
+		//}
+		//}
 	}
 
 	// Bring all the data back together for the 0th process to return
