@@ -73,7 +73,7 @@ void distributeCentroids(std::vector<song>& centroids, int rank, int totalProces
 	if(rank != 0) recreateSongs(centroids, centroidNumbers, centroidCount);
 }
 
-float* distributeData(std::vector<song>& songs, int rank, int totalProcesses)
+void distributeData(std::vector<song>& songs, int rank, int totalProcesses)
 {
 	std::vector<float> songData;
 	int songCount = songs.size() / totalProcesses;

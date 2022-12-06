@@ -28,8 +28,11 @@ int main(int argc, char** argv)
 	
 	std::vector<song> clusteredSongsMPI[centroidCount];
 	
+	auto startTime = MPI_Wtime();
 	if(rank == 0) std::cout << "Running the MPI KNN algorithm\n";
-	MPI_KNN(data, centroids, clusteredSongsMPI, rank, size);
+	MPI_KNN(data, centroids, clusteredSongsMPI, rank, size, centroidCount);
+	auto endTime = MPI_Wtime();
+	if(rank == 0) std::cout << "MPI KNN took " << endTime - startTime << " seconds to run.\n";
 
 	if(rank == 0){
 		std::cout << "Writing the results out of the MPI KNN algorithm\n";
