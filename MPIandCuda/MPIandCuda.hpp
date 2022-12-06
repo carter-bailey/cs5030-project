@@ -32,7 +32,6 @@ void calculateAttributeSums(song& centroid, std::vector<song> songs)
 void recreateSongs(std::vector<song> &songs, float* songNumbers, int songCount){
 	// Create the songs from the song data
 	for(int i = 0; i < songCount; i++){
-		//std::cout << "Song " << i << " worked " << std::endl;
 		song s;
 		s.danceability = songNumbers[i * song::NUM_FEATURES];
 		s.energy = songNumbers[i * song::NUM_FEATURES + 1];
@@ -85,7 +84,7 @@ void distributeCentroids(std::vector<song>& centroids, int rank, int totalProces
 	if(rank != 0) recreateSongs(centroids, centroidNumbers, centroidCount);
 }
 
-int distributeData(std::vector<song>& songs, int rank, int totalProcesses)
+void distributeData(std::vector<song>& songs, int rank, int totalProcesses)
 {
 	std::vector<float> songData;
 	int songCount = songs.size() / totalProcesses;
@@ -115,7 +114,6 @@ int distributeData(std::vector<song>& songs, int rank, int totalProcesses)
 	} 
 	// Recreate process specific songs
 	recreateSongs(songs, songNumbers, songCount);
-	return songCount;
 }
 
 
@@ -168,7 +166,6 @@ std::vector<song> averageCentroids(std::vector<song> centroids, int* centroidCou
 		}
 		centroids[i] = song(centroidAttributeSums);
 	}
-	//std::cout << "Performed averageCentroids" << std::endl;
 	return centroids;
 }
 
@@ -182,15 +179,18 @@ std::vector<song> averageCentroids(std::vector<song> centroids, int* centroidCou
 // 	return songClusters;
 // }
 
-void MPI_KNN(std::vector<song> data, std:: vector<song> centroids, std::vector<song>* clusteredSongs, int rank, int size, int K){
+void createRaggedSongArray(std::vector<song>* clusteredSongs, std::vector<song> songs, int* songAssignments){
+	for(int i = 0; i < songs.size(); i++){
+		clusteredSongs[songAssignments[i]].push_back(songs[i]);
+	}
+}
+
+void MPI_KNN(std::vector<song> data, std::vector<song> centroids, std::vector<song>* clusteredSongs, int rank, int size, int K){
 	// Distribute the data equally among processes
-	int numSongs = distributeData(data, rank, size);
+	distributeData(data, rank, size);
+	int numSongs = data.size();
 	// Distribute the initial centroids to all processes
 	distributeCentroids(centroids, rank, size);
-	//std::cout<< "I am rank " << rank << " and have " << numSongs << " songs" << std::endl;
-
-	//for(int j = 0; j < K; j++){
-		//std::cout << "centroid " << j << " is " << centroids[j].toString() << std::endl;
 	//}
 
 	std::vector<float> songData;
@@ -198,74 +198,74 @@ void MPI_KNN(std::vector<song> data, std:: vector<song> centroids, std::vector<s
 	createSongDataArray(songData, data);
 	createSongDataArray(centroidData, centroids);
 
-  std::cout << "size of centroidData " << centroidData.size() << "\n";
+  	std::cout << "size of centroidData " << centroidData.size() << "\n";
 	float* data_h = songData.data(); 
 	float *centroids_h = centroidData.data();
-  std::cout << "size of centroids_h " << sizeof(centroids_h) << "\n";
-  int *cluster_sizes_h = new int[K]();
+	std::cout << "size of centroids_h " << sizeof(centroids_h) << "\n";
+	int *cluster_sizes_h = new int[K]();
 
 	float* data_d;
-  int *cluster_assignment_d;
-  float *centroids_d;
-  int *cluster_sizes_d;
-  int *numSongs_d, *K_d;
+	int *cluster_assignment_d;
+	int* cluster_assignment_h = new int[numSongs]();
+	float *centroids_d;
+	int *cluster_sizes_d;
+	int *numSongs_d, *K_d;
 
-  cudaMallocate((void**)&data_d, numSongs * sizeof(float) * song::NUM_FEATURES);
-  cudaMallocate((void**)&cluster_assignment_d, numSongs * sizeof(int));
-  cudaMallocate((void**)&centroids_d, K * sizeof(float) * song::NUM_FEATURES);
-  cudaMallocate((void**)&cluster_sizes_d, K * sizeof(int));
-  cudaMallocate((void**)&numSongs_d, sizeof(int));
-  cudaMallocate((void**)&K_d, sizeof(int));
+	cudaMallocate((void**)&data_d, numSongs * sizeof(float) * song::NUM_FEATURES);
+	cudaMallocate((void**)&cluster_assignment_d, numSongs * sizeof(int));
+	cudaMallocate((void**)&centroids_d, K * sizeof(float) * song::NUM_FEATURES);
+	cudaMallocate((void**)&cluster_sizes_d, K * sizeof(int));
+	cudaMallocate((void**)&numSongs_d, sizeof(int));
+	cudaMallocate((void**)&K_d, sizeof(int));
 
-  cudaMemorySet(cluster_assignment_d, 0, numSongs * sizeof(int));
-  cudaMemorySet(cluster_sizes_d, 0, K * sizeof(int));
+	cudaMemorySet(cluster_assignment_d, 0, numSongs * sizeof(int));
+	cudaMemorySet(cluster_sizes_d, 0, K * sizeof(int));
 
-  cudaMemoryCopy(numSongs_d, &numSongs, sizeof(int), 0);
-  cudaMemoryCopy(K_d, &K, sizeof(int), 0);
-  cudaMemoryCopy(data_d, data_h, numSongs * sizeof(float) * song::NUM_FEATURES, 0);
+	cudaMemoryCopy(numSongs_d, &numSongs, sizeof(int), 0);
+	cudaMemoryCopy(K_d, &K, sizeof(int), 0);
+	cudaMemoryCopy(data_d, data_h, numSongs * sizeof(float) * song::NUM_FEATURES, 0);
 
 
-		  for(int j = 0; j < K; j++){
-	  		std::cout << " initial centroid " << j << " is " << centroidData[j*9] << std::endl;
-	  	}
+	for(int j = 0; j < K; j++){
+		std::cout << " initial centroid " << j << " is " << centroidData[j*9] << std::endl;
+	}
   
 	std::vector<int> centroidCounts;
 	std::vector<float> newCentroidData;
 	std::vector<song> newCentroids;
-  for(int i = 0; i < ROUNDS; i++)
-  {	
-    std::cout << "before size " << sizeof(centroids_h) << "\n";
+	for(int i = 0; i < ROUNDS; i++)
+	{	
+	    std::cout << "before size " << sizeof(centroids_h) << "\n";
 		for(int j = 0; j < K; j++){
 			std::cout << "centroid " << j << " starts with " << cluster_sizes_h[j] << std::endl;
 		}
-   	cudaMemoryCopy(centroids_d, centroids_h, K * sizeof(float) * song::NUM_FEATURES, 0);
-    findClosestCentroidExterior(data_d, cluster_assignment_d, centroids_d, numSongs_d, K_d, BLOCKDIM, numSongs);
-    cudaDeviceSync();
-    resetCentroidsExterior(centroids_d, K_d, numSongs, BLOCKDIM);
-    cudaDeviceSync();
-    cudaMemorySet(cluster_sizes_d, 0, K * sizeof(int));
-    sumCentroidsExterior(data_d, cluster_assignment_d, centroids_d, cluster_sizes_d, numSongs_d, BLOCKDIM, numSongs);
-    cudaDeviceSync();
+		cudaMemoryCopy(centroids_d, centroids_h, K * sizeof(float) * song::NUM_FEATURES, 0);
+		findClosestCentroidExterior(data_d, cluster_assignment_d, centroids_d, numSongs_d, K_d, BLOCKDIM, numSongs);
+		cudaDeviceSync();
+		resetCentroidsExterior(centroids_d, K_d, numSongs, BLOCKDIM);
+		cudaDeviceSync();
+		cudaMemorySet(cluster_sizes_d, 0, K * sizeof(int));
+		sumCentroidsExterior(data_d, cluster_assignment_d, centroids_d, cluster_sizes_d, numSongs_d, BLOCKDIM, numSongs);
+		cudaDeviceSync();
 		cudaMemoryCopy(data_h, data_d, numSongs * sizeof(float) * song::NUM_FEATURES, 1);
 		cudaMemoryCopy(centroids_h, centroids_d, K * sizeof(float) * song::NUM_FEATURES, 1);
 		cudaMemoryCopy(cluster_sizes_h, cluster_sizes_d, K * sizeof(int), 1);
-    newCentroids.clear();
+		newCentroids.clear();
 		recreateSongs(newCentroids, centroids_h, K);
 		newCentroids = averageCentroids(newCentroids, cluster_sizes_h, K);
-    newCentroidData.clear();
+		newCentroidData.clear();
 		createSongDataArray(newCentroidData, newCentroids);
 
-    std::cout << "before going to array " << newCentroidData.size() << "\n";
+		std::cout << "before going to array " << newCentroidData.size() << "\n";
 		centroids_h = newCentroidData.data();
-    std::cout << "after size " << sizeof(centroids_h) << "\n";
-		//if(rank == 0){
-		//for(int j = 0; j < K; j++){
-       int j = 0;
-			//std::cout << "Centroid " << j << " is " << newCentroids[j].toString() << std::endl;
-		//}
-		//}
+		std::cout << "after size " << sizeof(centroids_h) << "\n";
+		int j = 0;
 	}
 
+	cudaMemoryCopy(cluster_assignment_h, cluster_assignment_d, numSongs * sizeof(int), 1);
+	std::cout << "Recreating  data 2.0 hopefully" << std::endl;
+	createRaggedSongArray(clusteredSongs, data, cluster_assignment_h);
+	std::cout << "Recreating  data 3.0 hopefully" << std::endl;
 	// Bring all the data back together for the 0th process to return
 	gatherClusteredSongs(clusteredSongs, centroids.size(), rank, size);
 }

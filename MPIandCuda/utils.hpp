@@ -39,7 +39,7 @@ std::stringstream readFileIntoStringstream(const std::string& path)
  */
 std::vector<song> getCSV()
 {
-	std::stringstream csv = readFileIntoStringstream("helpme.csv");
+	std::stringstream csv = readFileIntoStringstream("genres_v2.csv");
 	std::vector<song> content;
 	std::vector<std::string> data;
 
@@ -72,7 +72,7 @@ std::vector<song> getCSV()
 	// standardize the data in the vector
 	for (song& s : content)
 	{
-		//s.standardize(min, max);
+		s.standardize(min, max);
 	}
 
 	return content;

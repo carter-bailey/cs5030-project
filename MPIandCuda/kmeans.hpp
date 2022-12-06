@@ -25,13 +25,12 @@ std::vector<song> generateCentroids(int count, std::vector<song> s)
 	// make random centroids
 	for (int i = 0; i < count; i++)
 	{
-    centroids.push_back(s[i]);
-	//	point = distr(eng);
-	//	if (hash.find(point) == hash.end())
-	//	{
-	//		centroids.push_back(s[point]);
-	//		hash[point] = true;
-	//	}
+		point = distr(eng);
+		if (hash.find(point) == hash.end())
+		{
+			centroids.push_back(s[point]);
+			hash[point] = true;
+		}
 	}
 	return centroids;
 }

@@ -33,7 +33,7 @@ int main(int argc, char** argv)
 
 	if(rank == 0){
 		std::cout << "Writing the results out of the MPI KNN algorithm\n";
-		writeToCSV(clusteredSongsMPI, centroids, "MPIResults.csv");
+		writeToCSV(clusteredSongsMPI, centroids, "MPIAndCudaResults.csv");
 	}
 
     MPI_Finalize();
