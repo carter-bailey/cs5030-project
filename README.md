@@ -20,7 +20,6 @@ K-Means clustering is a type of unsupervised learning where the main goal is to 
 1. Pick K points as the initial centroids (ours is done randomly).
 2. Find the distance (we use Euclidean) of each point with the K points (Centroids).
 
-<<<<<<< HEAD
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;![](readMeImages/latex1.png)
 
 3. Assign each point to the closest Centroid.
@@ -48,6 +47,14 @@ Compile: `$cmake .` `$make`
 Run: `$./serial <amount of centroids>`
 
 ### **Shared CPU**
+(uses the same cmake file as serial)
+
+Required modules: `$module load cmake`
+
+Compile: `$cmake .` `$make`
+
+
+Run: `$./openmp <amount of centroids> <amount of threads>`
 
 ### **Shared GPU**
 
@@ -59,6 +66,6 @@ Run: `./main`
 
 ### **Distributed CPU**
 
-### **Distributed**
+### **Distributed GPU**
 
 
