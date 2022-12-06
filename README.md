@@ -35,6 +35,10 @@ where S is points in the clusters
 
 5. Repeat steps 2-4.
 
+
+####NOTE
+  We discovered that if the data wasn't standardized then tempo became the dominant selector for where songs were clustered. To remediate this issue we standardized the data.
+
 ## Compilation instructions
 
 ### **Serial**
@@ -77,3 +81,10 @@ This can be done by typing `python3 verifier.py` into the command line.
 
 Note that this file requires pandas which is not on the hpc clusters so you have to copy over the results.csv's onto your own computer to run verifier.py. 
 
+## Visualization
+
+A .ipynb file titled `visualization.ipynb` is provided for visualizing the cluster assignments in three dimensions as was asked by Dr. Petruzza. To run this notebook load it into jupyter notebook and run the cells.
+
+It will create one image for each version of the kmeans algorithm that was created. This image is a scatterplot, that is color coded based on the centroid assignment for the songs. 
+
+The x,y, and z variables that are used in the graphs can be changed individually to allow for more images to be made. 
