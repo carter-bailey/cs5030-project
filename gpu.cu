@@ -187,8 +187,16 @@ int main()
     song *data_h = &data[0];
     song *centroids_h = &centroids[0];
 
-    // Pass host variables into the launcher function
+    cudaEvent_t startEvent, stopEvent;
+    cudaEventCreate(&startEvent);
+    cudaEventCreate(&stopEvent);
+    float ms;
+    cudaEventRecord(startEvent, 0);
     launcher(centroids_h, data_h, cluster_assignment_h, numSongs);
+    cudaEventRecord(stopEvent, 0);
+    cudaEventSynchronize(stopEvent);
+    cudaEventElapsedTime(&ms, startEvent, stopEvent);
+    printf("Time: %f\n", ms);
 
     // Print the results to the output file
     std::ofstream output_file("results/cudaResults.csv");
