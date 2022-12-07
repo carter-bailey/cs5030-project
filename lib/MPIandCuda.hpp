@@ -152,7 +152,12 @@ void gatherClusteredSongs(std::vector<song>* songs, int centroidCount, int rank,
 }
 
 
-// Gather all the weighted average centroids and compute the new centroids
+/**
+ * @brief Gather all the summed centroids and compute the new centroids
+ *
+ * @param centroids The current centroids
+ * @param centroidCounts The number of songs in each centroid
+ */
 std::vector<song> averageCentroids(std::vector<song> centroids, int* centroidCounts, int centroidCount){
 	for(int i = 0; i < centroidCount; i++){
 		float* centroidAttributeSums = (float*)malloc(sizeof(float) * song::NUM_FEATURES);
@@ -169,7 +174,13 @@ std::vector<song> averageCentroids(std::vector<song> centroids, int* centroidCou
 	return centroids;
 }
 
-
+/**
+* @brief Create a ragged array of songs based on the song assignments
+*
+* @param clusteredSongs The array of songs to be created
+* @param songs The songs to be assigned
+* @param songAssignments The assignments of each song
+*/
 void createRaggedSongArray(std::vector<song>* clusteredSongs, std::vector<song> songs, int* songAssignments){
 	for(int i = 0; i < songs.size(); i++){
 		clusteredSongs[songAssignments[i]].push_back(songs[i]);
@@ -177,6 +188,15 @@ void createRaggedSongArray(std::vector<song>* clusteredSongs, std::vector<song> 
 }
 
 void MPI_KNN(std::vector<song> data, std::vector<song> centroids, std::vector<song>* clusteredSongs, int rank, int size, int K){
+/**
+* @brief Perform the KMeans Algorithm
+*
+* @param data The data to be clustered
+* @param centroids The initial centroids
+* @param clusteredSongs The songs that have been clustered
+* @param rank The rank of the current process
+* @param size The total number of processes
+*/
 	// Distribute the data equally among processes
 	distributeData(data, rank, size);
 	int numSongs = data.size();

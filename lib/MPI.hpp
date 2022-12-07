@@ -1,6 +1,12 @@
 #pragma once
 #include "kmeans.hpp"
 
+/**
+ * @brief Calculates the sum of all the attributes of the songs to be averaged later
+ *
+ * @param centroid The centroid to be summed
+ * @param songs The songs to be summed to the centroid
+ */
 void calculateAttributeSums(song& centroid, std::vector<song> songs)
 {
 	centroid.reset();
@@ -18,8 +24,15 @@ void calculateAttributeSums(song& centroid, std::vector<song> songs)
 	}
 }
 
+
+/**
+ * @brief Recreate the songs from the float data
+ *
+ * @param songs The songs to be passed back to the main function
+ * @param songNumbers The float data to be converted to songs
+ * @param songCount The number of songs to be created
+ */
 void recreateSongs(std::vector<song> &songs, float* songNumbers, int songCount){
-	// Create the songs from the song data
 	for(int i = 0; i < songCount; i++){
 		song s;
 		s.danceability = songNumbers[i * song::NUM_FEATURES];
@@ -35,7 +48,14 @@ void recreateSongs(std::vector<song> &songs, float* songNumbers, int songCount){
 	}
 }
 
-// Create counts and displacements arrays
+/**
+ * @brief Create counts and displacements arrays for the scatterv and gatherv functions
+ *
+ * @param counts The counts array to be passed to the scatterv function
+ * @param displacements The displacements array to be passed to the scatterv function
+ * @param songCount The number of songs to be sent to each process
+ * @param totalProcesses The total number of processes
+ */
 void createCountsAndDisplacements(std::vector<int>& counts, std::vector<int>& displacements, int songCount, int totalProcesses){
 	int offset = 0;
 	for(int i = 0; i < totalProcesses; i++){
@@ -45,7 +65,12 @@ void createCountsAndDisplacements(std::vector<int>& counts, std::vector<int>& di
 	}
 }
 
-// Create the song data array to send to the processes 
+/**
+* @brief Create a float array of the song data to send to each of the processes
+*
+* @param songData The float values of the song data
+* @param songs The songs to be converted to float values
+*/
 void createSongDataArray(std::vector<float>& songData, std::vector<song> songs){
 	for(int i = 0; i < songs.size(); i++){
 		float* temp = songs[i].toArray();
@@ -55,7 +80,13 @@ void createSongDataArray(std::vector<float>& songData, std::vector<song> songs){
 	}
 }
 
-// Send the centroids to the processes
+/**
+ * @brief Distribute the centroids to each of the processes initially
+ *
+ * @param centroids The centroids to be distributed
+ * @param rank The rank of the current process
+ * @param totalProcesses The total number of processes
+ */
 void distributeCentroids(std::vector<song>& centroids, int rank, int totalProcesses){
 	std::vector<float> centroidData;
 	int centroidCount = centroids.size();
@@ -73,6 +104,13 @@ void distributeCentroids(std::vector<song>& centroids, int rank, int totalProces
 	if(rank != 0) recreateSongs(centroids, centroidNumbers, centroidCount);
 }
 
+/**
+* @brief Distribute the song data to each of the processes
+*
+* @param songs The songs to be distributed
+* @param rank The rank of the current process
+* @param totalProcesses The total number of processes
+*/
 void distributeData(std::vector<song>& songs, int rank, int totalProcesses)
 {
 	std::vector<float> songData;
@@ -106,7 +144,14 @@ void distributeData(std::vector<song>& songs, int rank, int totalProcesses)
 }
 
 
-
+/**
+ * @brief Gather the songs from each process and put them into the correct centroid
+ *
+ * @param songs The songs to be gathered
+ * @param centroidCount The number of centroids
+ * @param rank The rank of the current process
+ * @param size The total number of processes
+ */
 void gatherClusteredSongs(std::vector<song>* songs, int centroidCount, int rank, int size){
 	std::vector<int> counts;
 	std::vector<int> displacements;
@@ -141,7 +186,12 @@ void gatherClusteredSongs(std::vector<song>* songs, int centroidCount, int rank,
 }
 
 
-// Gather all the weighted average centroids and compute the new centroids
+/**
+ * @brief Gather all the summed centroids and compute the new centroids
+ *
+ * @param centroids The current centroids
+ * @param centroidCounts The number of songs in each centroid
+ */
 std::vector<song> averageCentroids(std::vector<song> centroids, std::vector<int> centroidCounts){
 	for(int i = 0; i < centroids.size(); i++){
 		float* centroidAttributeSums = (float*)malloc(sizeof(float) * song::NUM_FEATURES);
@@ -158,6 +208,15 @@ std::vector<song> averageCentroids(std::vector<song> centroids, std::vector<int>
 	return centroids;
 }
 
+/**
+* @brief Perform the KMeans Algorithm
+*
+* @param data The data to be clustered
+* @param centroids The initial centroids
+* @param clusteredSongs The songs that have been clustered
+* @param rank The rank of the current process
+* @param size The total number of processes
+*/
 void MPI_KNN(std::vector<song> data, std:: vector<song> centroids, std::vector<song>* clusteredSongs, int rank, int size){
 	// Distribute the data equally among processes
 	distributeData(data, rank, size);
