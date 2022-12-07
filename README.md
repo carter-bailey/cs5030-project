@@ -56,6 +56,10 @@ where S is points in the clusters
   
 ## Compilation instructions
 
+### Note:
+
+To change the centroid count its necessary to change the value of centroidCount or K in the individual implementations files.
+
 ### **Serial**
 
 Required modules: `$module load cmake`

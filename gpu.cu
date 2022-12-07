@@ -4,6 +4,7 @@
 #include <cmath>
 #include "lib/kmeans.hpp"
 // This is the size of the centroids so the amount of k
+// We had slightly varying results with increasing the value of K because of floating point rounding differences with cuda. 4 was the value that works consistently with the verifier
 #define K 4
 
 // The amount of times that centroids are recalculated
