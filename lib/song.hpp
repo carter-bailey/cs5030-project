@@ -159,6 +159,7 @@ void song::standardize(song min, song max)
 	tempo = (tempo - min.tempo) / (max.tempo - min.tempo);
 }
 
+// Writes out each part of the song class into a string for easy writing to csv
 std::string song::toString()
 {
 	std::stringstream s("");
@@ -166,6 +167,7 @@ std::string song::toString()
 	return s.str();
 }
 
+// converts the song class into an array to be used in both the MPI and GPU implementations
 float* song::toArray()
 {
 	float* arr = (float*)malloc(sizeof(float) * NUM_FEATURES);

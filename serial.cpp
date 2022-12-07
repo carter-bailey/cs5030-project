@@ -17,7 +17,6 @@ int main(int argc, char** argv)
 	auto centroids = generateCentroids(centroidCount, data);
 	std::vector<song> clusteredSongs[centroidCount];
 
-	// SERIAL
 	std::cout << "Running the serial K Means algorithm\n";
 	auto start = std::chrono::high_resolution_clock::now();
 	serialKMeans(data, centroids, clusteredSongs);
