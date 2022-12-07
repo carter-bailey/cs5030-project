@@ -1,6 +1,6 @@
 #include <mpi.h>
 #define MCW MPI_COMM_WORLD
-#include "MPIandCuda.hpp"
+#include "lib/MPIandCuda.hpp"
 
 int main(int argc, char** argv)
 {

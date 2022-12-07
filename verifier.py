@@ -7,11 +7,13 @@ def verifier(original, new):
     new.reset_index(drop=True,inplace=True)
     return original["centroid"].equals(new["centroid"])
 
-serial = pd.read_csv("serialResults.csv")
-mp = pd.read_csv("OpenMPResults.csv")
-#mpi = pd.read_csv("mpiResults.csv")
-gpu = pd.read_csv("cudaResults.csv")
+serial = pd.read_csv("results/serialResults.csv")
+mp = pd.read_csv("results/OpenMPResults.csv")
+mpi = pd.read_csv("mpiResults.csv")
+gpu = pd.read_csv("results/cudaResults.csv")
+gpuMPI = pd.read_csv("resuls/MPIAndGPU.csv")
 
 print(f"openmp is same as serial? {verifier(serial, mp)}")
-#print(f"openmpi is same as serial? {verifier(serial, mpi)}")
+print(f"openmpi is same as serial? {verifier(serial, mpi)}")
 print(f"gpu is same as serial? {verifier(serial, gpu)}")
+print(f"gpumpi is same as serial? {verifier(serial, gpuMPI)}")
