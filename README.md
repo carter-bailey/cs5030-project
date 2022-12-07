@@ -69,9 +69,23 @@ Compile: `nvcc gpu.cu -o main`
 Run: `./main`
 
 ### **Distributed CPU**
+Required modules: 
+  `module load gcc/8.5.0`
+  `module load intel-mpi`
+
+Compile: `mpicxx -o mpi MPI.cpp`
+
+Run: `mpiexec -n <number of processes> ./mpi <amount of centroids>`
+
 
 ### **Distributed GPU**
+Required modules: 
+  `module load gcc/8.5.0`
+  `module load mvapich2 cuda`
 
+Compile: `mpicxx -c main.cpp -o main.o; nvcc -c main.cu -o gpu_main.o; mpicxx main.o gpu_main.o -lcudart;`
+
+Run: `mpiexec -n <number of processes> ./a.out <amount of centroids>`
 
 ## Verification
 
