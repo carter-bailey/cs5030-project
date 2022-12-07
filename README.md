@@ -121,6 +121,9 @@ The x,y, and z variables that are used in the graphs can be changed individually
 
 ## Scaling Study
 
+**NOTE** 
+In the graphs directory there are images that correlate with all of our scaling studies.
+
 ### Serial
   With the serial implementation we found that as data increased the amount of time to compute also increased linearly. 
 
@@ -140,6 +143,8 @@ The x,y, and z variables that are used in the graphs can be changed individually
 ### Serial Vs. Parallel CPU Vs. Parallel GPU
 The serial version performed the slowest, this was due to only having one thread running. The CPU and GPU versions both saw significant speedup. The GPU version performed the best due to it's high amount of threads being used. The CPU version still saw a speedup but this was hindered due to the critical section in one of the for loops causing all the threads to have to wait on each other. 
 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;![](graphs/serialvsparallelvsgpu.png)
 ### Distributed CPU Vs. Distributed GPU
   The GPU version was significantly faster than the CPU version. This was due to the Speedup of using the parallel benefits of the GPU to compute the centroids, whereas the cpu version was computing them serially just on different processors. 
   Both versions saw a slowdown with having to send and recieve data back and forth. With a larger dataset the advantages of both of these implementations would have been more realized. 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;![](graphs/MPIvsMPIGPU.png)
