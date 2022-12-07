@@ -3,9 +3,8 @@
 #include <cuda_runtime.h>
 #include <cmath>
 #include "lib/kmeans.hpp"
-
 // This is the size of the centroids so the amount of k
-#define K 8
+#define K 4
 
 // The amount of times that centroids are recalculated
 #define ROUNDS 20
