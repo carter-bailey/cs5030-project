@@ -63,7 +63,7 @@ Required modules: `$module load cmake`
 Compile: `$cmake .` `$make`
 
 
-Run: `$./serial <amount of centroids>`
+Run: `$./serial `
 
 ### **Shared CPU**
 (uses the same cmake file as serial)
@@ -73,7 +73,7 @@ Required modules: `$module load cmake`
 Compile: `$cmake .` `$make`
 
 
-Run: `$./openmp <amount of centroids> <amount of threads>`
+Run: `$./openmp <amount of threads>`
 
 ### **Shared GPU**
 
@@ -90,7 +90,7 @@ Required modules:
 
 Compile: `mpicxx -o mpi MPI.cpp`
 
-Run: `mpiexec -n <number of processes> ./mpi <amount of centroids>`
+Run: `mpiexec -n <number of processes> ./mpi`
 
 
 ### **Distributed GPU**
@@ -100,7 +100,7 @@ Required modules:
 
 Compile: `mpicxx -c MPIandCuda.cpp -o main.o; nvcc -c MPIandCuda.cu -o gpu_main.o; mpicxx main.o gpu_main.o -lcudart;`
 
-Run: `mpiexec -n <number of processes> ./a.out <amount of centroids>`
+Run: `mpiexec -n <number of processes> ./a.out`
 
 ## Verification
 
