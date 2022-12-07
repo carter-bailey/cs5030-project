@@ -1,4 +1,4 @@
-#include "cudaUtils.cuh"
+#include "lib/cudaUtils.cuh"
 #include <stdio.h>
 #include <assert.h>
 
