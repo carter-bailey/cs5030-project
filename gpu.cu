@@ -4,11 +4,8 @@
 #include <cmath>
 #include "lib/kmeans.hpp"
 
-// This the the amount of songs in the data
-#define N 42305
-
 // This is the size of the centroids so the amount of k
-#define K 4
+#define K 8
 
 // The amount of times that centroids are recalculated
 #define ROUNDS 20
@@ -164,12 +161,6 @@ void launcher(song *centroids_h, song *data_h, int *cluster_assignment_h, int nu
         cudaDeviceSynchronize();
         updateCentroids<<<block, grid>>>(data_d, cluster_assignment_d, centroids_d, cluster_sizes_d);
         cudaDeviceSynchronize();
-
-        // for debugging purposes
-        // cudaMemcpy(centroids_h, centroids_d, K * sizeof(song), cudaMemcpyDeviceToHost);
-        // for (int j = 0; j < K; ++j){
-        //     printf("Iteration %d: centroid %d: %f\n",i,j,centroids_h[j].danceability);
-        // }
     }
 
     // copy our final results over
@@ -201,7 +192,7 @@ int main()
     launcher(centroids_h, data_h, cluster_assignment_h, numSongs);
 
     // Print the results to the output file
-    std::ofstream output_file("cudaResults.csv");
+    std::ofstream output_file("results/cudaResults.csv");
     output_file << "centroid,danceability,energy,loudness,speechiness,acousticness,instrumental,liveness,valence,tempo\n";
     for (long unsigned int i = 0; i < numSongs; ++i)
     {

@@ -98,7 +98,7 @@ Required modules:
   `module load gcc/8.5.0`
   `module load mvapich2 cuda`
 
-Compile: `mpicxx -c MPIAndCuda.cpp -o main.o; nvcc -c MPIAndCuda.cu -o gpu_main.o; mpicxx main.o gpu_main.o -lcudart;`
+Compile: `mpicxx -c MPIandCuda.cpp -o main.o; nvcc -c MPIandCuda.cu -o gpu_main.o; mpicxx main.o gpu_main.o -lcudart;`
 
 Run: `mpiexec -n <number of processes> ./a.out <amount of centroids>`
 

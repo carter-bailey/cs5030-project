@@ -9,9 +9,9 @@ def verifier(original, new):
 
 serial = pd.read_csv("results/serialResults.csv")
 mp = pd.read_csv("results/OpenMPResults.csv")
-mpi = pd.read_csv("mpiResults.csv")
+mpi = pd.read_csv("results/MPIResults.csv")
 gpu = pd.read_csv("results/cudaResults.csv")
-gpuMPI = pd.read_csv("resuls/MPIAndGPU.csv")
+gpuMPI = pd.read_csv("results/MPIAndCudaResults.csv")
 
 print(f"openmp is same as serial? {verifier(serial, mp)}")
 print(f"openmpi is same as serial? {verifier(serial, mpi)}")

@@ -86,7 +86,7 @@ std::vector<song> getCSV()
  */
 void writeToCSV(std::vector<song>* clusteredSongs, std::vector<song> centroids, std::string name = "results.csv")
 {
-	std::ofstream output_file("results/"+name);
+	std::ofstream output_file("results/" + name);
 	output_file << "centroid,danceability,energy,loudness,speechiness,\
     acousticness,instrumental,liveness,valence,tempo\n";
 	for (long unsigned int i = 0; i < centroids.size(); i++)

@@ -45,7 +45,7 @@ std::vector<song> generateCentroids(int count, std::vector<song> s)
 void updateCentroid(song& centroid, std::vector<song> songs)
 {
 	centroid.reset();
-  // sum all the songs values that were found for a centroid 
+	// sum all the songs values that were found for a centroid
 	for (long unsigned int i = 0; i < songs.size(); i++)
 	{
 		centroid.danceability += songs[i].danceability;
@@ -58,7 +58,7 @@ void updateCentroid(song& centroid, std::vector<song> songs)
 		centroid.valence += songs[i].valence;
 		centroid.tempo += songs[i].tempo;
 	}
-  // get the average by dividing how many songs were added into the centroid
+	// get the average by dividing how many songs were added into the centroid
 	centroid.danceability /= songs.size();
 	centroid.energy /= songs.size();
 	centroid.loudness /= songs.size();
@@ -82,7 +82,7 @@ int findClosestCentroid(song s, std::vector<song> centroids)
 {
 	float distance, minDistance = std::numeric_limits<float>::max();
 	int troid = -1;
-  // for the song compare against each centroid to find which one is the closest
+	// for the song compare against each centroid to find which one is the closest
 	for (long unsigned int i = 0; i < centroids.size(); i++)
 	{
 		distance = centroids[i].distance(s);
@@ -109,13 +109,13 @@ void serialKMeans(std::vector<song> data, std::vector<song> centroids, std::vect
 	for (int i = 0; i < ROUNDS; i++)
 	{
 		int centroid;
-    // for each song we have find it's closest centroid
+		// for each song we have find it's closest centroid
 		for (long unsigned int j = 0; j < data.size(); j++)
 		{
 			centroid = findClosestCentroid(data[j], centroids);
 			clusteredSongs[centroid].push_back(data[j]);
 		}
-    // for each centroid we have update it's location based on the songs that are clustered with that centroid
+		// for each centroid we have update it's location based on the songs that are clustered with that centroid
 		for (long unsigned int j = 0; j < centroids.size(); j++)
 		{
 			updateCentroid(centroids[j], clusteredSongs[j]);
