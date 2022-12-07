@@ -1,5 +1,6 @@
 #pragma once
 #include "kmeans.hpp"
+#include "lib/MPI.hpp"
 #define BLOCKDIM 64
 
 void resetCentroidsExterior(float *centroids, int* K, int numSongs, int blockDim1);
